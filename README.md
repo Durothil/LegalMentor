@@ -1,79 +1,81 @@
 
-# 🧠 Rag Jurídico
+# ⚖️ LegalMentor
 
-Projeto de RAG (Retrieval-Augmented Generation) voltado para análise de documentos jurídicos com uso de modelos de linguagem (LLMs). Permite carregar arquivos jurídicos (como PDFs) ou coletar dados de APIs públicas, gerar embeddings, indexar os dados com FAISS e realizar perguntas em linguagem natural com respostas baseadas no conteúdo.
+**LegalMentor** é um sistema inteligente de análise jurídica baseado em **RAG (Retrieval-Augmented Generation)**. Evolução direta do projeto *rag_juridico*, esta nova versão oferece uma base profissional para copilotos jurídicos com uso de IA generativa, integração com **Claude Sonnet 4**, embeddings contextuais, vetorização com **Pinecone** e futura compatibilidade com o protocolo **MCP da Anthropic**.
 
 ---
 
 ## 🚀 Objetivo
 
-Demonstrar como a técnica de RAG pode ser aplicada no setor jurídico para facilitar a análise e extração de informações de documentos legais, como contratos, petições, decisões judiciais e pareceres.
+Desenvolver uma solução robusta para leitura, análise e resposta contextual de documentos jurídicos em linguagem natural, com foco em:
+
+- Eficiência na consulta de contratos, pareceres, decisões e leis.
+- Assistência jurídica automatizada via LLM.
+- Arquitetura modular e escalável para futuros upgrades (LangGraph, multimodalidade, SaaS, etc).
 
 ---
 
-## Vídeo exibindo o projeto em funcionamento
-- https://www.linkedin.com/feed/update/urn:li:activity:7326319147112402945/
-
----
-
-## 🖼️ Exemplo do Sistema
-
-Veja abaixo uma prévia do layout da aplicação em execução:
+## 📸 Exemplo do Sistema
 
 ![Layout do sistema](assets/layout_sistema.png)
 
 ---
 
-## 🔧 Tecnologias Utilizadas
+## 🌐 Demonstração em Vídeo
 
-- Python 3.10+
-- Streamlit
-- LangChain
-- FAISS
-- Sentence-Transformers
-- Llama API (via Groq)
-- Docling
-- Pytest (testes automatizados)
+🔗 [Veja o projeto em ação no LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7326319147112402945/)
+
+---
+
+## 🧠 Tecnologias Utilizadas
+
+- **Python 3.10+**
+- **Streamlit** (Interface)
+- **LangChain** (Orquestração RAG)
+- **Claude Sonnet 4** (via API da Anthropic)
+- **Pinecone** (Vectorstore vetorial com embeddings integrados)
+- **Docling** (Processamento semântico de PDFs)
+- **HuggingFace Embeddings** (`multilingual-e5-large`)
+- **Pytest** (testes automatizados)
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-rag_juridico/
+legalmentor/
 │
-├── app.py                 # Interface com Streamlit
-├── rag_pipeline.py        # Pipeline de ingestão, embedding, indexação e resposta
-├── utils.py               # Funções auxiliares (carregamento, token count, etc.)
-├── requirements.txt       # Bibliotecas necessárias
-├── pytest.ini             # Configurações de teste
-├── LICENSE                # Licença do projeto
-├── README.md              # Este arquivo
+├── app.py                # Interface principal (Streamlit)
+├── rag_pipeline.py       # Pipeline RAG com vetorização e cadeia de resposta
+├── utils.py              # Funções auxiliares (metadados, logs, sanitização)
+├── requirements.txt      # Bibliotecas e versões
+├── Dockerfile            # Imagem para container
+├── README.md             # Documentação principal
 │
 ├── assets/
 │   └── layout_sistema.png
 │
 ├── .streamlit/
-│   ├── secrets.toml       # Para deploy seguro
-│   └── config.toml
+│   ├── secrets.toml      # Configurações de API (Claude, Pinecone)
+│   └── config.toml       # Configs de tema/execução
 │
 ├── data/
-│    ├── documentos/        # PDFs ou documentos de entrada
-│    └── indexes/           # FAISS index gerado para os documentos
+│   ├── documentos/       # PDFs e arquivos enviados
+│   └── indexes/          # Índices locais (caso FAISS seja usado em testes)
 │
 ├── tests/
-│   ├── test_pipeline.py   # Testes do pipeline principal
-│   └── test_utils.py      # Testes das funções auxiliares
+│   ├── test_pipeline.py  # Testes de fluxo principal
+│   └── test_utils.py     # Testes de funções auxiliares
 ```
 
 ---
 
-## ▶️ Como Executar
+## ▶️ Como Executar Localmente
 
-1. Crie e ative um ambiente virtual:
+1. Crie e ative o ambiente virtual:
 ```bash
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 ```
 
 2. Instale as dependências:
@@ -81,7 +83,7 @@ source venv/bin/activate  # ou venv\Scripts\activate no Windows
 pip install -r requirements.txt
 ```
 
-3. Execute o app:
+3. Execute o sistema:
 ```bash
 streamlit run app.py
 ```
@@ -90,69 +92,87 @@ streamlit run app.py
 
 ## 🧪 Testes Automatizados
 
-Este projeto utiliza **pytest** para testes unitários automatizados. Os testes estão localizados na pasta `tests/` e cobrem:
-
-- Funções auxiliares (`utils.py`)
-- Pipeline de ingestão e RAG (`rag_pipeline.py`)
-
-### ✔️ Executar os testes
-
-Com o ambiente virtual ativado, execute:
-
+Executar com:
 ```bash
 pytest tests/
 ```
 
-### 🧹 Limpeza automática
-
-Os testes criam arquivos temporários como índices FAISS. Esses arquivos são **automaticamente removidos** após os testes.
-
----
-
-## 🛠️ Funcionalidades
-
-- [x] Upload de documentos jurídicos
-- [x] Extração e chunking do texto
-- [x] Geração de embeddings
-- [x] Indexação com FAISS
-- [x] Consulta via LLM com base nos documentos
-- [x] Testes automatizados com `pytest`
-- [ ] Coleta de dados de APIs públicas
-- [ ] Histórico de consultas
-- [ ] Geração de relatórios automáticos
+Os testes cobrem:
+- Cálculo de tokens e sanitização de metadados
+- Indexação vetorial e consulta contextual
+- Erros controlados e fallback seguro
 
 ---
 
-## 📌 Considerações Técnicas
+## ✅ Funcionalidades Implementadas
 
-Este projeto implementa um sistema de **RAG tradicional**, com fluxo linear de ingestão, indexação vetorial e recuperação via FAISS, complementado por um LLM (Groq + LLaMA3) para geração de respostas baseadas em documentos jurídicos.
+- [x] Upload de PDFs jurídicos
+- [x] Extração semântica com Docling
+- [x] Geração de embeddings contextuais
+- [x] Indexação com Pinecone
+- [x] Consulta jurídica com LLM (Groq + LLaMA3)
+- [x] Transição pronta para Claude via API
+- [x] Sanitização de metadados compatível com Pinecone
+- [x] Testes automatizados com Pytest
 
-A arquitetura atual é adequada para:
-- 🟢 **Ambientes de produção leve**
-- 🧪 **Demonstrações institucionais**
-- 📄 **Casos de uso com análise direta de documentos em PDF**
+---
 
-### 🧠 Possível Evolução: RAG com LangGraph
+## 🧠 Roadmap de Evolução
 
-Para cenários mais dinâmicos, como:
-- Fluxos de análise em múltiplas etapas (ex: sumarização + verificação + resposta)
-- Retenção de estado conversacional
-- Processamento condicional com agentes LLM
+### 📌 Etapa Atual:
+- ✅ Pinecone em vez de FAISS
+- 🚧 Substituir Groq por Claude Sonnet 4
+- 🚧 Simulação de MCP-like com LangChain
 
-... é recomendada a adoção do **LangGraph**, que permite orquestração avançada, controle de fluxo personalizado e maior escalabilidade em interações complexas.
+### 🔜 Etapas Futuras:
+#### 1. LangGraph (nível de agente inteligente)
+- Cadeias separadas por intenção (resumo, extração, comparação)
+- Persistência de estado
+- Controle de fluxo conversacional
 
-Essa distinção reforça a **intenção arquitetural do projeto**: começar simples, mas com base sólida para futura evolução.
+#### 2. Enriquecimento de contexto com reranking
+- Re-ranking via Cohere ou bge-reranker
+- Filtros semânticos por seção legal (cláusula, título, artigo)
+
+#### 3. MCP oficial (Anthropic)
+- Acesso a editores, cursor e arquivos com compreensão nativa
+- RAG transformado em copiloto jurídico completo
+
+#### 4. Autoavaliação e feedback loop
+- Modelo avalia qualidade das respostas
+- Ajuste dinâmico com RHF-like
+
+#### 5. SaaS Multiusuário
+- Sessões independentes por usuário
+- Histórico, preferências e permissões
+- Dashboards de uso e relatórios
+
+#### 6. Multimodalidade
+- Leitura de contratos escaneados (OCR)
+- Upload de áudio jurídico para transcrição
+- Integrações com automações (e-mails, geração de minutas, etc.)
+
+---
+
+## 📦 Docker (para produção)
+
+Você pode usar o Docker para isolar o ambiente:
+
+```bash
+docker build -t legalmentor .
+docker run -p 8501:8501 legalmentor
+```
 
 ---
 
 ## 👨‍💼 Desenvolvido por
 
 **Mewerton de Melo Silva**  
-Ciência de Dados | Inteligência Artificial  
-Contato: [LinkedIn](https://www.linkedin.com/in/mewerton/)
+Especialista em IA & Ciência de Dados  
+🔗 [LinkedIn](https://www.linkedin.com/in/mewerton/)
 
 ---
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+Este projeto está sob a licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.
