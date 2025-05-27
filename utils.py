@@ -8,6 +8,18 @@ from typing import Union
 from pathlib import Path
 
 
+def sanitize_metadata(metadata: dict) -> dict:
+    """Garante que os metadados estejam no formato aceito pelo Pinecone."""
+    cleaned = {}
+    for k, v in metadata.items():
+        if isinstance(v, (str, int, float, bool)):
+            cleaned[k] = v
+        elif isinstance(v, list) and all(isinstance(i, str) for i in v):
+            cleaned[k] = v
+        else:
+            cleaned[k] = str(v)
+    return cleaned
+
 def count_tokens(text: str, model_name: str = "intfloat/multilingual-e5-large") -> int:
     """Conta quantos tokens o texto possui com base no modelo informado."""
     tokenizer = AutoTokenizer.from_pretrained(model_name)

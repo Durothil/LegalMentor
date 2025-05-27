@@ -1,5 +1,5 @@
 # Ambiente virtual
-venv/
+.venv/
 
 # Arquivos do Streamlit
 .streamlit/secrets.toml

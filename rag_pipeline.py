@@ -3,7 +3,9 @@ from typing import List, Dict, Any
 import streamlit as st
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_core.vectorstores import VectorStore
+from langchain_community.vectorstores import Pinecone as PineconeLang
+from pinecone import Pinecone
 from langchain_core.documents import Document as LCDocument
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -16,9 +18,10 @@ from langchain_docling.loader import ExportType
 from pathlib import Path
 
 from utils import (
+    sanitize_metadata,
     log_time,
     prefix_documents_for_e5,
-    hash_filename,
+    #hash_filename,
     count_tokens,
     extract_metadata,
     format_response,
@@ -61,43 +64,44 @@ def create_or_load_vectorstore(
     file_path: str,
     documents: List[LCDocument],
     embeddings: HuggingFaceEmbeddings
-) -> FAISS:
+):# -> FAISS:
     """
+    Substitui o FAISS por Pinecone.
+
     3° - Cria ou carrega um índice FAISS:
          - Gera um hash a partir do nome do arquivo para nomear a pasta de índice.
          - Se já existir, carrega; caso contrário, cria e salva o novo índice.
     """
     try:
-        # Garante que a pasta existe
-        INDEX_FOLDER.mkdir(parents=True, exist_ok=True)
+        # Inicializa cliente Pinecone
+        pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 
-        # Nome base e hash do arquivo para isolar índices
-        base = Path(file_path).stem
-        hashed = hash_filename(base)
-        index_path = INDEX_FOLDER / f"{hashed}_faiss_index"
+        index_name = "legalmentor"
 
-        if index_path.exists():
-            # Carrega índice existente
-            return FAISS.load_local(
-                str(index_path),
-                embeddings,
-                allow_dangerous_deserialization=True,
-            )
+        # Confere se o index existe
+        if index_name not in pc.list_indexes().names():
+            st.error(f"Index '{index_name}' não existe no Pinecone.")
+            return None
 
-        # Cria novo índice a partir dos documentos
-        vectorstore = FAISS.from_documents(documents, embeddings)
-        vectorstore.save_local(str(index_path))
+        for doc in documents:
+            doc.metadata = sanitize_metadata(doc.metadata)
+
+        # Cria vectorstore com LangChain + Pinecone
+        vectorstore = PineconeLang.from_documents(
+            documents=documents,
+            embedding=embeddings,
+            index_name=index_name,
+            namespace="default"
+        )
+
         return vectorstore
 
-    except FileNotFoundError as e:
-        st.error(f"Arquivo não encontrado: {e}")
-        return None
-    except ValueError as e:
-        st.error(f"Formato inválido: {e}")
+    except Exception as e:
+        st.error(f"Erro ao conectar ao Pinecone: {e}")
         return None
 
 
-def create_rag_chain(vectorstore: FAISS) -> Any:
+def create_rag_chain(vectorstore: VectorStore) -> Any:
     """
     4° - Cria o retriever com MMR e configura o LLM Groq + Llama3,
          monta a cadeia de documentos e retrieval e retorna um wrapper.
