@@ -121,7 +121,7 @@ Os testes cobrem:
 
 ### 📌 Etapa Atual:
 - ✅ Pinecone em vez de FAISS
-- 🚧 Substituir Groq por Claude Sonnet 4
+- ✅ Substituir Groq por Claude Sonnet 4
 - 🚧 Simulação de MCP-like com LangChain
 
 ### 🔜 Etapas Futuras:
