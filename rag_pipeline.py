@@ -7,7 +7,8 @@ from langchain_core.vectorstores import VectorStore
 from langchain_community.vectorstores import Pinecone as PineconeLang
 from pinecone import Pinecone
 from langchain_core.documents import Document as LCDocument
-from langchain_groq import ChatGroq
+#from langchain_groq import ChatGroq
+from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
@@ -33,7 +34,7 @@ DOCUMENTS_FOLDER = DATA_FOLDER / "documentos"
 INDEX_FOLDER = DATA_FOLDER / "indexes"
 INDEX_FOLDER.mkdir(parents=True, exist_ok=True)
 EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-large"
-LLM_MODEL_NAME = "llama3-8b-8192"
+LLM_MODEL_NAME = "claude-sonnet-4-20250514"
 TOKEN_LIMIT = 7000  # limite aproximado de tokens para prompt
 
 
@@ -111,10 +112,11 @@ def create_rag_chain(vectorstore: VectorStore) -> Any:
         search_kwargs={"k": 20, "fetch_k": 100, "lambda_mult": 0.8},
     )
 
-    llm = ChatGroq(
+    llm = ChatAnthropic(
         temperature=0.1,
         model_name=LLM_MODEL_NAME,
-        api_key=st.secrets["GROQ_API_KEY"],
+        api_key=st.secrets["ANTHROPIC_API_KEY"],
+        max_tokens=1000,  # Resposta gerada
     )
     
     # Prompt padrão com contexto e instruções
@@ -155,8 +157,11 @@ Resposta:
                 ),
                 model_name=EMBEDDING_MODEL_NAME
             )
+
+            st.info(f"📏 Prompt estimado em ~{approx} tokens (limite configurado: {TOKEN_LIMIT}).")
+
             if approx > TOKEN_LIMIT:
-                st.warning(f"⚠️ Prompt estimado em ~{approx} tokens (limite {TOKEN_LIMIT}).")
+                st.warning(f"⚠️ Atenção: o prompt está acima do limite seguro e pode causar erro.")
 
             # 2) Invoca o chain original
             output = self._chain.invoke(inputs)
@@ -180,7 +185,7 @@ Resposta:
 
 
 @log_time
-def process_document(file_path: str) -> Any:
+def process_document(file_path: str = None) -> Any:
     """
     6° - Pipeline completo:
          1) Carrega e prefixa documentos
@@ -189,8 +194,12 @@ def process_document(file_path: str) -> Any:
          4) Constrói e retorna a cadeia RAG personalizada
     """
     # 1) Load & prefix
-    docs = load_documents_with_docling(file_path)
-    docs = prefix_documents_for_e5(docs)
+    if file_path:
+        docs = load_documents_with_docling(file_path)
+        docs = prefix_documents_for_e5(docs)
+    else:
+        docs = []  # apenas inicializa o vectorstore vazio, pois já temos documentos indexados
+
 
     # 2) (opcional) split: use este passo somente se
     #    – você estiver carregando o documento como um único bloco de texto (por ex. via PdfPlumber / PyPDF2),
@@ -203,7 +212,7 @@ def process_document(file_path: str) -> Any:
 
     # 3) embeddings e vectorstore
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
-    vs = create_or_load_vectorstore(file_path, docs, embeddings)
+    vs = create_or_load_vectorstore(file_path or "default", docs, embeddings)
 
     # 4) Cria e retorna o wrapper da chain
     return create_rag_chain(vs)

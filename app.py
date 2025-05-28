@@ -40,7 +40,23 @@ if uploaded_file:
     except Exception as e:
         st.error(f"❌ Falha ao salvar o documento: {e}")
 
-# Botão para processar
+# Se quiser iniciar direto com os dados já indexados no Pinecone
+st.markdown("### Ou use os documentos existentes no Pinecone")
+if st.button("📦 Iniciar com documentos existentes"):
+    try:
+        with st.spinner("Conectando com os documentos existentes no Pinecone..."):
+            chain = process_document(None)  # passamos None para não carregar novos arquivos
+        if chain is None:
+            st.error("❌ Não foi possível criar a pipeline RAG.")
+        else:
+            st.success("✅ RAG iniciado com documentos do Pinecone!")
+            st.session_state.rag_chain = chain
+            st.session_state.history.clear()
+    except Exception as e:
+        st.error(f"❌ Erro ao iniciar com documentos do Pinecone: {e}")
+
+# Upload e processamento de novo documento
+st.markdown("### Ou envie um novo documento PDF para análise")
 if st.session_state.document_path:
     if st.button("🔍 Processar documento"):
         try:
@@ -51,10 +67,10 @@ if st.session_state.document_path:
             else:
                 st.success("✅ Documento processado com sucesso!")
                 st.session_state.rag_chain = chain
-                # Limpa histórico quando se carrega novo doc
                 st.session_state.history.clear()
         except Exception as e:
             st.error(f"❌ Erro ao processar documento: {e}")
+
 
 st.divider()
 
