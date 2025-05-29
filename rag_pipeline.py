@@ -7,7 +7,6 @@ from langchain_core.vectorstores import VectorStore
 from langchain_community.vectorstores import Pinecone as PineconeLang
 from pinecone import Pinecone
 from langchain_core.documents import Document as LCDocument
-#from langchain_groq import ChatGroq
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
@@ -161,7 +160,7 @@ Resposta:
             st.info(f"📏 Prompt estimado em ~{approx} tokens (limite configurado: {TOKEN_LIMIT}).")
 
             if approx > TOKEN_LIMIT:
-                st.warning(f"⚠️ Atenção: o prompt está acima do limite seguro e pode causar erro.")
+                st.warning("Atenção: o prompt está acima do limite seguro e pode causar erro.")
 
             # 2) Invoca o chain original
             output = self._chain.invoke(inputs)

@@ -21,7 +21,7 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 
 ---
 
-## 🌐 Demonstração em Vídeo
+## 🌐 Demonstração em Vídeo do Rag Jurídico
 
 🔗 [Veja o projeto em ação no LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7326319147112402945/)
 
@@ -49,7 +49,6 @@ legalmentor/
 ├── rag_pipeline.py       # Pipeline RAG com vetorização e cadeia de resposta
 ├── utils.py              # Funções auxiliares (metadados, logs, sanitização)
 ├── requirements.txt      # Bibliotecas e versões
-├── Dockerfile            # Imagem para container
 ├── README.md             # Documentação principal
 │
 ├── assets/
@@ -110,8 +109,7 @@ Os testes cobrem:
 - [x] Extração semântica com Docling
 - [x] Geração de embeddings contextuais
 - [x] Indexação com Pinecone
-- [x] Consulta jurídica com LLM (Groq + LLaMA3)
-- [x] Transição pronta para Claude via API
+- [x] Consulta jurídica com LLM (Anthropic + Claude)
 - [x] Sanitização de metadados compatível com Pinecone
 - [x] Testes automatizados com Pytest
 
@@ -151,17 +149,6 @@ Os testes cobrem:
 - Leitura de contratos escaneados (OCR)
 - Upload de áudio jurídico para transcrição
 - Integrações com automações (e-mails, geração de minutas, etc.)
-
----
-
-## 📦 Docker (para produção)
-
-Você pode usar o Docker para isolar o ambiente:
-
-```bash
-docker build -t legalmentor .
-docker run -p 8501:8501 legalmentor
-```
 
 ---
 
