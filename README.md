@@ -155,7 +155,6 @@ Os testes cobrem:
 ## 👨‍💼 Desenvolvido por
 
 **Mewerton de Melo Silva**  
-Especialista em IA & Ciência de Dados  
 🔗 [LinkedIn](https://www.linkedin.com/in/mewerton/)
 
 ---

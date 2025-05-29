@@ -103,7 +103,7 @@ def create_or_load_vectorstore(
 
 def create_rag_chain(vectorstore: VectorStore) -> Any:
     """
-    4° - Cria o retriever com MMR e configura o LLM Groq + Llama3,
+    4° - Cria o retriever com MMR e configura o LLM ANTHROPIC + Claude,
          monta a cadeia de documentos e retrieval e retorna um wrapper.
     """
     retriever = vectorstore.as_retriever(
