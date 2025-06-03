@@ -15,6 +15,10 @@ from langchain.chains.retrieval import create_retrieval_chain
 from langchain_docling import DoclingLoader
 from langchain_docling.loader import ExportType
 
+from pdf2image import convert_from_path
+import pytesseract
+from PIL import Image
+
 from pathlib import Path
 
 from utils import (
@@ -49,14 +53,42 @@ def load_documents_with_docling(
     loader = DoclingLoader(file_path=file_path, export_type=export_type)
     return loader.load()
 
+@log_time
+def load_documents_with_ocr(file_path: str) -> List[LCDocument]:
+    """
+    Alternativa ao Docling: extrai texto via OCR com pytesseract de PDFs com páginas digitalizadas (sem texto acessível).
+    """
+    try:
+        # Converte cada página do PDF em uma imagem
+        images = convert_from_path(file_path, dpi=300)
+        if not images:
+            st.warning("⚠️ Nenhuma página foi detectada no PDF.")
+            return []
+        documents = []
 
-def split_text_into_chunks(documents: List[LCDocument]) -> List[LCDocument]:
-    """
-    2° - O RecursiveCharacterTextSplitter divide os documentos em pedaços
-         menores (300 tokens com 100 de sobreposição) para otimizar embeddings.
-    """
-    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=100)
-    return splitter.split_documents(documents)
+        for i, image in enumerate(images):
+            try:
+                text = pytesseract.image_to_string(image, lang="por")
+            except:
+                text = pytesseract.image_to_string(image)  
+            if text.strip():
+                documents.append(LCDocument(page_content=text, metadata={"page": i + 1}))
+        
+        if not documents:
+            st.warning("⚠️ OCR não conseguiu extrair texto. Verifique a qualidade do PDF.")
+        return documents
+
+    except Exception as e:
+        st.error(f"Erro durante OCR com pytesseract: {e}")
+        return []
+
+# def split_text_into_chunks(documents: List[LCDocument]) -> List[LCDocument]:
+#     """
+#     2° - O RecursiveCharacterTextSplitter divide os documentos em pedaços
+#          menores (300 tokens com 100 de sobreposição) para otimizar embeddings.
+#     """
+#     splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=100)
+#     return splitter.split_documents(documents)
 
 
 @log_time
@@ -166,11 +198,11 @@ Resposta:
             output = self._chain.invoke(inputs)
 
             # 3) Exibe metadados e trechos de contexto recuperado
-            if "context" in output:
-                st.write("🔍 Documentos recuperados:")
-                for doc in output["context"]:
-                    #st.write(f"{extract_metadata(doc)} — {doc.page_content[:200]}…")
-                    st.write(f"{extract_metadata(doc)} — {doc.page_content}")
+            # if "context" in output:
+            #     st.write("🔍 Documentos recuperados:")
+            #     for doc in output["context"]:
+            #         #st.write(f"{extract_metadata(doc)} — {doc.page_content[:200]}…")
+            #         st.write(f"{extract_metadata(doc)} — {doc.page_content}")
 
             # 4) Pós‑processa a resposta
             if "answer" in output:
@@ -195,6 +227,9 @@ def process_document(file_path: str = None) -> Any:
     # 1) Load & prefix
     if file_path:
         docs = load_documents_with_docling(file_path)
+        if not docs or not isinstance(docs, list) or all(not doc.page_content.strip() for doc in docs):
+            st.warning("📄 O Docling não encontrou texto acessível no PDF. Usando OCR como fallback.")
+            docs = load_documents_with_ocr(file_path)
         docs = prefix_documents_for_e5(docs)
     else:
         docs = []  # apenas inicializa o vectorstore vazio, pois já temos documentos indexados
