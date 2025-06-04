@@ -3,6 +3,7 @@ from PIL import Image
 import pytesseract
 from pdf2image import convert_from_path
 import re
+from langsmith import traceable
 
 from langchain_core.documents import Document as LCDocument
 from sentence_transformers import SentenceTransformer, util
@@ -18,6 +19,7 @@ semantic_model = SentenceTransformer("sentence-transformers/paraphrase-multiling
 
 
 # ======== ETAPA 1: OCR + Estrutura Visual ========
+@traceable(name="📸 OCR com Bounding Boxes")
 def image_to_layout_chunks(image: Image.Image, page_number: int = 1) -> List[LCDocument]:
     """
     Aplica OCR com bounding boxes e LayoutLMv2 para estruturar o conteúdo.
@@ -62,6 +64,7 @@ def image_to_layout_chunks(image: Image.Image, page_number: int = 1) -> List[LCD
 
 
 # ======== ETAPA 2: Regex Jurídico ========
+@traceable(name="⚖️ Regex Jurídico de Cláusulas")
 def split_legal_chunks_regex(documents: List[LCDocument]) -> List[LCDocument]:
     """
     Divide chunks maiores em trechos jurídicos com base em padrões (CLÁUSULAS, ARTs, §§, etc).
@@ -102,6 +105,7 @@ def adaptive_similarity_threshold(chunk_text: str) -> float:
     """
     return 0.80 if len(chunk_text) < 300 else 0.70
 
+@traceable(name="🔗 Agrupamento Semântico")
 def group_similar_chunks(chunks: List[LCDocument]) -> List[LCDocument]:
     """
     Agrupa chunks juridicamente próximos com base em similaridade semântica adaptativa.
@@ -132,6 +136,7 @@ def group_similar_chunks(chunks: List[LCDocument]) -> List[LCDocument]:
 
 
 # ======== Função Principal ========
+@traceable(name="🧠 OCR Fallback (LayoutLM)")
 def layout_ocr_from_pdf(file_path: str) -> List[LCDocument]:
     """
     Converte um PDF imagem em chunks estruturados com OCR + LayoutLM + Regex + Agrupamento semântico.

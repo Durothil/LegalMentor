@@ -105,22 +105,30 @@ Os testes cobrem:
 
 ## ✅ Funcionalidades Implementadas
 
-- [x] Upload de PDFs jurídicos
-- [x] Extração semântica com Docling
-- [x] Geração de embeddings contextuais
-- [x] Indexação com Pinecone
-- [x] Consulta jurídica com LLM (Anthropic + Claude)
-- [x] Sanitização de metadados compatível com Pinecone
-- [x] Testes automatizados com Pytest
+- [x] Upload de PDFs jurídicos  
+- [x] Extração semântica com Docling  
+- [x] Fallback com OCR avançado (LayoutLMv2 + Tesseract)  
+- [x] Separação jurídica via regex (CLÁUSULAS, ARTs, §§)  
+- [x] Agrupamento semântico adaptativo (Sentence-BERT)  
+- [x] Geração de embeddings contextuais (E5)  
+- [x] Indexação com Pinecone  
+- [x] Consulta jurídica com LLM (Anthropic + Claude Sonnet 4)  
+- [x] Sanitização de metadados compatível com Pinecone  
+- [x] Testes automatizados com Pytest  
+- [x] Telemetria com LangSmith:
+  - [x] Cadeia RAG completa rastreada
+  - [x] Tokenização, tempo de resposta e custo estimado
+  - [x] Instrumentação das etapas (OCR, Embeddings, etc.)
 
 ---
 
 ## 🧠 Roadmap de Evolução
 
 ### 📌 Etapa Atual:
-- ✅ Pinecone em vez de FAISS
-- ✅ Substituir Groq por Claude Sonnet 4
-- 🚧 Simulação de MCP-like com LangChain
+- ✅ Pinecone em vez de FAISS  
+- ✅ Substituir Groq por Claude Sonnet 4  
+- ✅ OCR com LayoutLMv2 + regex jurídica + agrupamento semântico  
+- 🚧 Simulação de MCP-like com LangChain (Planner, Controller, Memory)  
 
 ### 🔜 Etapas Futuras:
 #### 1. LangGraph (nível de agente inteligente)
@@ -146,7 +154,7 @@ Os testes cobrem:
 - Dashboards de uso e relatórios
 
 #### 6. Multimodalidade
-- Leitura de contratos escaneados (OCR)
+- Leitura de contratos escaneados (OCR)  (já entregue)
 - Upload de áudio jurídico para transcrição
 - Integrações com automações (e-mails, geração de minutas, etc.)
 

@@ -1,3 +1,4 @@
+import setup_langsmith # pylint: disable=unused-import # necessário para configurar variáveis de ambiente
 from typing import List, Dict, Any
 
 import streamlit as st
@@ -23,6 +24,9 @@ from pathlib import Path
 
 from layout_ocr import layout_ocr_from_pdf
 
+from langsmith import traceable
+from setup_langsmith import tracing_enabled
+
 from utils import (
     sanitize_metadata,
     log_time,
@@ -31,16 +35,14 @@ from utils import (
     format_response,
 )
 
-# Configurações
-DATA_FOLDER = Path("data")
-DOCUMENTS_FOLDER = DATA_FOLDER / "documentos"
-INDEX_FOLDER = DATA_FOLDER / "indexes"
-INDEX_FOLDER.mkdir(parents=True, exist_ok=True)
-EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-large"
-LLM_MODEL_NAME = "claude-sonnet-4-20250514"
-TOKEN_LIMIT = 7000  # limite aproximado de tokens para prompt
-
-
+from config import (
+    EMBEDDING_MODEL_NAME,
+    LLM_MODEL_NAME,
+    TOKEN_LIMIT,
+    PINECONE_INDEX_NAME
+)
+    
+@traceable(name="📄 Load Documents (Docling)")
 @log_time
 def load_documents_with_docling(
     file_path: str,
@@ -53,44 +55,7 @@ def load_documents_with_docling(
     loader = DoclingLoader(file_path=file_path, export_type=export_type)
     return loader.load()
 
-# @log_time
-# def load_documents_with_ocr(file_path: str) -> List[LCDocument]:
-#     """
-#     Alternativa ao Docling: extrai texto via OCR com pytesseract de PDFs com páginas digitalizadas (sem texto acessível).
-#     """
-#     try:
-#         # Converte cada página do PDF em uma imagem
-#         images = convert_from_path(file_path, dpi=300)
-#         if not images:
-#             st.warning("⚠️ Nenhuma página foi detectada no PDF.")
-#             return []
-#         documents = []
-
-#         for i, image in enumerate(images):
-#             try:
-#                 text = pytesseract.image_to_string(image, lang="por")
-#             except:
-#                 text = pytesseract.image_to_string(image)  
-#             if text.strip():
-#                 documents.append(LCDocument(page_content=text, metadata={"page": i + 1}))
-        
-#         if not documents:
-#             st.warning("⚠️ OCR não conseguiu extrair texto. Verifique a qualidade do PDF.")
-#         return documents
-
-#     except Exception as e:
-#         st.error(f"Erro durante OCR com pytesseract: {e}")
-#         return []
-
-# def split_text_into_chunks(documents: List[LCDocument]) -> List[LCDocument]:
-#     """
-#     2° - O RecursiveCharacterTextSplitter divide os documentos em pedaços
-#          menores (300 tokens com 100 de sobreposição) para otimizar embeddings.
-#     """
-#     splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=100)
-#     return splitter.split_documents(documents)
-
-
+@traceable(name="🧊 Create/Load Vectorstore (Pinecone)")
 @log_time
 def create_or_load_vectorstore(
     file_path: str,
@@ -108,7 +73,7 @@ def create_or_load_vectorstore(
         # Inicializa cliente Pinecone
         pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
 
-        index_name = "legalmentor"
+        index_name = PINECONE_INDEX_NAME
 
         # Confere se o index existe
         if index_name not in pc.list_indexes().names():
@@ -170,51 +135,66 @@ Resposta:
 
     class RagChainWrapper:
         """
-        5° - Wrapper que:
-             a) Estima tokens e alerta se próximo do limite
-             b) Invoca o chain original
-             c) Exibe metadados e trechos do contexto recuperado
-             d) Formata a resposta final
+        Wrapper que:
+        a) Estima tokens e alerta se próximo do limite
+        b) Invoca o chain original
+        c) Exibe metadados e trechos do contexto recuperado
+        d) Formata a resposta final
         """
         def __init__(self, chain):
             self._chain = chain
 
-        def invoke(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-            # 1) Estima tokens do prompt
-            approx = count_tokens(
-                template.format(
-                    context="",
-                    input=inputs.get("input", "")
-                ),
-                model_name=EMBEDDING_MODEL_NAME
-            )
+        if tracing_enabled:
 
-            st.info(f"📏 Prompt estimado em ~{approx} tokens (limite configurado: {TOKEN_LIMIT}).")
+            @traceable(name="LegalMentor-RAG")
+            def invoke(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+                approx = count_tokens(
+                    template.format(
+                        context="",
+                        input=inputs.get("input", "")
+                    ),
+                    model_name=EMBEDDING_MODEL_NAME
+                )
 
-            if approx > TOKEN_LIMIT:
-                st.warning("Atenção: o prompt está acima do limite seguro e pode causar erro.")
+                st.info(f"📏 Prompt estimado em ~{approx} tokens (limite configurado: {TOKEN_LIMIT}).")
 
-            # 2) Invoca o chain original
-            output = self._chain.invoke(inputs)
+                if approx > TOKEN_LIMIT:
+                    st.warning("Atenção: o prompt está acima do limite seguro e pode causar erro.")
 
-            # 3) Exibe metadados e trechos de contexto recuperado
-            # if "context" in output:
-            #     st.write("🔍 Documentos recuperados:")
-            #     for doc in output["context"]:
-            #         #st.write(f"{extract_metadata(doc)} — {doc.page_content[:200]}…")
-            #         st.write(f"{extract_metadata(doc)} — {doc.page_content}")
+                output = self._chain.invoke(inputs)
 
-            # 4) Pós‑processa a resposta
-            if "answer" in output:
-                output["answer"] = format_response(output["answer"])
+                if "answer" in output:
+                    output["answer"] = format_response(output["answer"])
 
-            return output
+                return output
+        else:
+            def invoke(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+                approx = count_tokens(
+                    template.format(
+                        context="",
+                        input=inputs.get("input", "")
+                    ),
+                    model_name=EMBEDDING_MODEL_NAME
+                )
 
-        __call__ = invoke # permite usar o wrapper como função
+                st.info(f"📏 Prompt estimado em ~{approx} tokens (limite configurado: {TOKEN_LIMIT}).")
+
+                if approx > TOKEN_LIMIT:
+                    st.warning("Atenção: o prompt está acima do limite seguro e pode causar erro.")
+
+                output = self._chain.invoke(inputs)
+
+                if "answer" in output:
+                    output["answer"] = format_response(output["answer"])
+
+                return output
+
+        __call__ = invoke  # permite usar o wrapper como função
+
 
     return RagChainWrapper(retrieval_chain)
 
-
+@traceable(name="🧩 Pipeline: Processar Documento", metadata={"modelo": EMBEDDING_MODEL_NAME})
 @log_time
 def process_document(file_path: str = None) -> Any:
     """
