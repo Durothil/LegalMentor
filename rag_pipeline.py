@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 
 import streamlit as st
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+#from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.vectorstores import VectorStore
 from langchain_community.vectorstores import Pinecone as PineconeLang
@@ -21,13 +21,13 @@ from PIL import Image
 
 from pathlib import Path
 
+from layout_ocr import layout_ocr_from_pdf
+
 from utils import (
     sanitize_metadata,
     log_time,
     prefix_documents_for_e5,
-    #hash_filename,
     count_tokens,
-    extract_metadata,
     format_response,
 )
 
@@ -53,34 +53,34 @@ def load_documents_with_docling(
     loader = DoclingLoader(file_path=file_path, export_type=export_type)
     return loader.load()
 
-@log_time
-def load_documents_with_ocr(file_path: str) -> List[LCDocument]:
-    """
-    Alternativa ao Docling: extrai texto via OCR com pytesseract de PDFs com páginas digitalizadas (sem texto acessível).
-    """
-    try:
-        # Converte cada página do PDF em uma imagem
-        images = convert_from_path(file_path, dpi=300)
-        if not images:
-            st.warning("⚠️ Nenhuma página foi detectada no PDF.")
-            return []
-        documents = []
+# @log_time
+# def load_documents_with_ocr(file_path: str) -> List[LCDocument]:
+#     """
+#     Alternativa ao Docling: extrai texto via OCR com pytesseract de PDFs com páginas digitalizadas (sem texto acessível).
+#     """
+#     try:
+#         # Converte cada página do PDF em uma imagem
+#         images = convert_from_path(file_path, dpi=300)
+#         if not images:
+#             st.warning("⚠️ Nenhuma página foi detectada no PDF.")
+#             return []
+#         documents = []
 
-        for i, image in enumerate(images):
-            try:
-                text = pytesseract.image_to_string(image, lang="por")
-            except:
-                text = pytesseract.image_to_string(image)  
-            if text.strip():
-                documents.append(LCDocument(page_content=text, metadata={"page": i + 1}))
+#         for i, image in enumerate(images):
+#             try:
+#                 text = pytesseract.image_to_string(image, lang="por")
+#             except:
+#                 text = pytesseract.image_to_string(image)  
+#             if text.strip():
+#                 documents.append(LCDocument(page_content=text, metadata={"page": i + 1}))
         
-        if not documents:
-            st.warning("⚠️ OCR não conseguiu extrair texto. Verifique a qualidade do PDF.")
-        return documents
+#         if not documents:
+#             st.warning("⚠️ OCR não conseguiu extrair texto. Verifique a qualidade do PDF.")
+#         return documents
 
-    except Exception as e:
-        st.error(f"Erro durante OCR com pytesseract: {e}")
-        return []
+#     except Exception as e:
+#         st.error(f"Erro durante OCR com pytesseract: {e}")
+#         return []
 
 # def split_text_into_chunks(documents: List[LCDocument]) -> List[LCDocument]:
 #     """
@@ -221,15 +221,16 @@ def process_document(file_path: str = None) -> Any:
     6° - Pipeline completo:
          1) Carrega e prefixa documentos
          2) (Opcional) Chunk splitting
-         3) Cria/recupera vectorstore FAISS
+         3) Cria/recupera vectorstore Pinecone
          4) Constrói e retorna a cadeia RAG personalizada
     """
     # 1) Load & prefix
     if file_path:
         docs = load_documents_with_docling(file_path)
         if not docs or not isinstance(docs, list) or all(not doc.page_content.strip() for doc in docs):
-            st.warning("📄 O Docling não encontrou texto acessível no PDF. Usando OCR como fallback.")
-            docs = load_documents_with_ocr(file_path)
+            st.warning("📄 O Docling não encontrou texto acessível no PDF. Usando OCR avançado com LayoutLM como fallback.")
+            docs = layout_ocr_from_pdf(file_path)
+
         docs = prefix_documents_for_e5(docs)
     else:
         docs = []  # apenas inicializa o vectorstore vazio, pois já temos documentos indexados
