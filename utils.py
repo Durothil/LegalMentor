@@ -7,6 +7,7 @@ from langchain_core.documents import Document as LCDocument
 from transformers import AutoTokenizer
 from typing import Union
 from pathlib import Path
+from config import EMBEDDING_TOKEN_LIMIT
 
 @traceable(name="🧼 Sanitizar Metadados")
 def sanitize_metadata(metadata: dict) -> dict:
@@ -21,11 +22,34 @@ def sanitize_metadata(metadata: dict) -> dict:
             cleaned[k] = str(v)
     return cleaned
 
+@traceable(name="✂️ Ajustar Chunks por Token", metadata={"limite_tokens": EMBEDDING_TOKEN_LIMIT})
+def adjust_chunks_to_token_limit(docs: List[LCDocument], max_tokens: int) -> List[LCDocument]:
+    adjusted = []
+    for doc in docs:
+        sub_chunks = split_text_by_token_limit(doc.page_content, max_tokens=max_tokens)
+        for chunk in sub_chunks:
+            adjusted.append(LCDocument(page_content=chunk, metadata=doc.metadata))
+    return adjusted
+
 @traceable(name="🧮 Contar Tokens")
 def count_tokens(text: str, model_name: str = "intfloat/multilingual-e5-large") -> int:
     """Conta quantos tokens o texto possui com base no modelo informado."""
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     return len(tokenizer.encode(text))
+
+@traceable(name="✂️ Quebrar Texto por Limite de Tokens")
+def split_text_by_token_limit(text: str, max_tokens: int = 512, model_name: str = "intfloat/multilingual-e5-large") -> List[str]:
+    """Divide o texto em partes menores respeitando o limite de tokens do modelo."""
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokens = tokenizer.encode(text, truncation=False)
+    
+    chunks = []
+    for i in range(0, len(tokens), max_tokens):
+        chunk_tokens = tokens[i:i + max_tokens]
+        chunk_text = tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+        chunks.append(chunk_text.strip())
+    
+    return chunks
 
 @traceable(name="🔤 Prefixar para E5")
 def prefix_documents_for_e5(documents: List[LCDocument]) -> List[LCDocument]:
@@ -53,7 +77,10 @@ def log_time(func):
 
 
 def extract_metadata(document: LCDocument) -> str:
-    """Retorna metadados úteis de um Document para exibição ou debug."""
+    """
+    Retorna uma string curta contendo a origem do documento,
+    útil para exibição como fonte em respostas da IA.
+    """
     meta = document.metadata or {}
     return f"[Origem: {meta.get('source', 'Desconhecida')}]"
 
@@ -63,5 +90,10 @@ def ensure_directory(path: Union[str, Path]) -> None:
 
 @traceable(name="🧹 Formatador de Resposta")
 def format_response(text: str) -> str:
-    """Formata a resposta da IA removendo espaços extras e limpando markdown."""
-    return text.strip().replace("\n\n", "\n")
+    """Formata a resposta da IA com legibilidade aprimorada."""
+    cleaned = text.strip().replace("\r", "").replace("**", "")
+    return "\n".join([linha.strip() for linha in cleaned.split("\n") if linha.strip()])
+
+# def format_response(text: str) -> str:
+#     """Formata a resposta da IA removendo espaços extras e limpando markdown."""
+#     return text.strip().replace("\n\n", "\n")

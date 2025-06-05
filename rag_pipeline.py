@@ -2,7 +2,6 @@ import setup_langsmith # pylint: disable=unused-import # necessário para config
 from typing import List, Dict, Any
 
 import streamlit as st
-#from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.vectorstores import VectorStore
 from langchain_community.vectorstores import Pinecone as PineconeLang
@@ -16,12 +15,6 @@ from langchain.chains.retrieval import create_retrieval_chain
 from langchain_docling import DoclingLoader
 from langchain_docling.loader import ExportType
 
-from pdf2image import convert_from_path
-import pytesseract
-from PIL import Image
-
-from pathlib import Path
-
 from layout_ocr import layout_ocr_from_pdf
 
 from langsmith import traceable
@@ -33,13 +26,17 @@ from utils import (
     prefix_documents_for_e5,
     count_tokens,
     format_response,
+    #split_text_by_token_limit,
+    adjust_chunks_to_token_limit
 )
 
 from config import (
     EMBEDDING_MODEL_NAME,
     LLM_MODEL_NAME,
     TOKEN_LIMIT,
-    PINECONE_INDEX_NAME
+    PINECONE_INDEX_NAME,
+    EMBEDDING_TOKEN_LIMIT,
+    PINECONE_BATCH_SIZE
 )
     
 @traceable(name="📄 Load Documents (Docling)")
@@ -88,7 +85,8 @@ def create_or_load_vectorstore(
             documents=documents,
             embedding=embeddings,
             index_name=index_name,
-            namespace="default"
+            namespace="default",
+            batch_size=PINECONE_BATCH_SIZE  # ou outro valor ideal baseado na RAM . Se estiver passando documentos muito grandes ou muitos documentos, vale usar batch_size
         )
 
         return vectorstore
@@ -211,9 +209,14 @@ def process_document(file_path: str = None) -> Any:
             st.warning("📄 O Docling não encontrou texto acessível no PDF. Usando OCR avançado com LayoutLM como fallback.")
             docs = layout_ocr_from_pdf(file_path)
 
+        st.info(f"📚 Documento carregado com {len(docs)} chunks estruturados.")
+
         docs = prefix_documents_for_e5(docs)
+        # ⚠️ Ajustar chunks que ultrapassam o limite de tokens
+        docs = adjust_chunks_to_token_limit(docs, EMBEDDING_TOKEN_LIMIT)
+        st.info(f"🔍 Após ajuste de tokens, total de chunks: {len(docs)}")
     else:
-        docs = []  # apenas inicializa o vectorstore vazio, pois já temos documentos indexados
+        docs = []
 
 
     # 2) (opcional) split: use este passo somente se

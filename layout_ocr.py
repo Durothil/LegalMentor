@@ -3,12 +3,15 @@ from PIL import Image
 import pytesseract
 from pdf2image import convert_from_path
 import re
+import streamlit as st
 from langsmith import traceable
 
 from langchain_core.documents import Document as LCDocument
 from sentence_transformers import SentenceTransformer, util
 from typing import List
-
+from config import EMBEDDING_TOKEN_LIMIT
+from utils import (split_text_by_token_limit, 
+                   adjust_chunks_to_token_limit)
 
 # ======== MODELOS =========
 # LayoutLMv2
@@ -149,4 +152,10 @@ def layout_ocr_from_pdf(file_path: str) -> List[LCDocument]:
         all_chunks.extend(page_chunks)
 
     # Final: agrupar semanticamente
-    return group_similar_chunks(all_chunks)
+    grouped_chunks = group_similar_chunks(all_chunks)
+
+    # 🔪 Dividir se algum chunk ultrapassar o limite de tokens
+    final_chunks = adjust_chunks_to_token_limit(grouped_chunks, EMBEDDING_TOKEN_LIMIT)
+    st.info(f"📊 OCR finalizou com {len(final_chunks)} chunks estruturados.")
+    
+    return final_chunks
