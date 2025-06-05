@@ -53,6 +53,7 @@ legalmentor/
 ├── requirements.txt      # Bibliotecas e versões
 ├── README.md             # Documentação principal
 ├── setup_langsmith.py    # 
+├── LICENSE               # 
 │
 ├── assets/
 │   └── layout_sistema.png
