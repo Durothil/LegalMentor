@@ -270,11 +270,11 @@ Etapas pendentes:
 
 Atualmente, a aplicação utiliza uma abordagem leve e eficiente para estruturar documentos jurídicos digitalizados, composta por:
 
-🧠 OCR com bounding boxes via pytesseract
-🧱 Estruturação visual com LayoutLMv2Processor (sem inferência com o modelo completo)
-⚖️ Separação por cláusulas jurídicas usando regex
-🧬 Agrupamento semântico com Sentence-BERT (MiniLM)
-✂️ Divisão inteligente por limite de tokens compatível com o modelo E5
+- 🧠 OCR com bounding boxes via pytesseract.
+- 🧱 Estruturação visual com LayoutLMv2Processor (sem inferência com o modelo completo).
+- ⚖️ Separação por cláusulas jurídicas usando regex.
+- 🧬 Agrupamento semântico com Sentence-BERT (MiniLM).
+- ✂️ Divisão inteligente por limite de tokens compatível com o modelo E5.
 
 Essa estratégia cobre aproximadamente 80% dos casos reais de uso com documentos jurídicos escaneados, aliando desempenho e robustez.
 
@@ -282,9 +282,9 @@ Essa estratégia cobre aproximadamente 80% dos casos reais de uso com documentos
 
 Está nos planos evoluir essa estrutura para utilizar LayoutLMv2 ou LayoutLMv3 com inferência completa, o que permitirá:
 
-- Maior precisão na compreensão visual de documentos complexos (ex: colunas, campos desalinhados).
-- Aplicação de NER jurídico (Reconhecimento de Entidades) com extração automática de informações como cláusulas, datas, valores e partes do contrato.
-- Possibilidade de fine-tuning para tarefas jurídicas específicas.
+- ✅ Maior precisão na compreensão visual de documentos complexos (ex: colunas, campos desalinhados).
+- ✅ Aplicação de NER jurídico (Reconhecimento de Entidades) com extração automática de informações como cláusulas, datas, valores e partes do contrato.
+- ✅ Possibilidade de fine-tuning para tarefas jurídicas específicas.
 
 Essa evolução exigirá mais recursos computacionais (como GPU), mas trará ganhos significativos para casos de uso que demandam alta acurácia e extração inteligente de dados estruturados.
 
