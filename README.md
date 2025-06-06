@@ -45,33 +45,34 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 ```
 legalmentor/
 │
-├── config.py             # 
-├── layout_ocr.py         # 
-├── app.py                # Interface principal (Streamlit)
+├── app.py                # Interface principal com Streamlit
+├── config.py             # Configurações globais do projeto
+├── layout_ocr.py         # Layout da interface para OCR e upload de PDFs
 ├── rag_pipeline.py       # Pipeline RAG com vetorização e cadeia de resposta
-├── utils.py              # Funções auxiliares (metadados, logs, sanitização)
-├── requirements.txt      # Bibliotecas e versões
+├── setup_langsmith.py    # Integração com LangSmith para telemetria
+├── utils.py              # Funções auxiliares: logs, limpeza, metadados
+├── requirements.txt      # Dependências do projeto
 ├── README.md             # Documentação principal
-├── setup_langsmith.py    # 
-├── LICENSE               # 
-├── .gitignore            # 
-├── pytest.ini            # 
-├── build_and_up.bat      # 
-├── .dockerignore         # 
-├── Dockerfile            # 
-├── docker-compose.yml    # 
+├── LICENSE               # Licença do projeto (MIT)
+├── pytest.ini            # Configurações para testes com Pytest
+│
+├── build_and_up.bat      # Script para rebuild e execução via Docker
+├── Dockerfile            # Instruções para build da imagem Docker
+├── docker-compose.yml    # Orquestração do container Docker
+├── .dockerignore         # Arquivos ignorados no contexto do Docker build
+├── .gitignore            # Arquivos/pastas ignorados pelo Git
 │
 ├── assets/
-│   └── layout_sistema.png
+│   └── layout_sistema.png  # Imagem de exemplo da interface
 │
 ├── .streamlit/
-│   ├── secrets.example.toml 
-│   └── config.toml       # Configs de tema/execução
+│   ├── config.toml          # Configurações visuais e gerais do Streamlit
+│   └── secrets.example.toml # Exemplo seguro de variáveis sensíveis
 │
 ├── tests/
-│   ├── test_pipeline.py        # Testes de fluxo principal
-│   ├── test_python_version.py  # Testes de versão
-│   └── test_utils.py           # Testes de funções auxiliares
+│   ├── test_pipeline.py        # Testes da cadeia RAG
+│   ├── test_python_version.py  # Teste da versão mínima do Python
+│   └── test_utils.py           # Testes para funções auxiliares
 ```
 
 ---
@@ -95,6 +96,68 @@ streamlit run app.py
 ```
 
 ---
+
+
+## 🐳 Executar com Docker (recomendado)
+
+Para garantir compatibilidade total e ambiente isolado, você pode rodar o LegalMentor via Docker:
+
+### 1. Pré-requisitos
+
+- Docker e Docker Compose instalados
+
+### 2. Build e execução automática
+
+Use o script:
+
+```bash
+./build_and_up.bat
+```
+
+Este comando:
+- 🛑 Para containers antigos
+- 🛠️ Recria a imagem com as alterações recentes
+- 🚀 Sobe o container atualizado
+
+### 3. Acessar a aplicação
+
+Após subir, acesse no navegador:
+
+```
+http://localhost:8501
+```
+
+### 4. Estrutura de secrets
+
+Você pode copiar o arquivo de exemplo para configurar suas variáveis:
+
+```bash
+cp .streamlit/secrets.example.toml .streamlit/secrets.toml
+```
+
+Edite com suas credenciais:
+
+```toml
+GROQ_API_KEY = "your-groq-api-key"
+PINECONE_API_KEY = "your-pinecone-api-key"
+ANTHROPIC_API_KEY = "your-anthropic-api-key"
+
+LANGSMITH_TRACING = "true"
+LANGSMITH_ENDPOINT = "https://api.smith.langchain.com"
+LANGSMITH_API_KEY = "your-langsmith-key"
+LANGSMITH_PROJECT = "LegalMentor"
+...
+```
+
+---
+
+## 🧪 Testes dentro do container
+
+Para rodar os testes direto no container:
+
+```bash
+docker exec -it legalmentor-container pytest
+```
 
 ## 🧪 Testes Automatizados
 
