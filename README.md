@@ -206,30 +206,25 @@ Etapas pendentes:
 - ✅ Pinecone em vez de FAISS  
 - ✅ Substituir Groq por Claude Sonnet 4  
 - ✅ OCR com LayoutLMv2 + regex jurídica + agrupamento semântico  
-- 🚧 Dockerizar 
+- ✅ Dockerizar 
 - 🚧 Simulação de MCP-like com LangChain (Planner, Controller, Memory)  
 
 ### 🔜 Etapas Futuras:
 
-#### 1. Dockerizar 
-- Garantir reprodutibilidade, portabilidade e isolar dependências.
-- Docker te dá uma base estável, local e no CI/CD.
-- Também é um pré-requisito para rodar localmente o mesmo código que irá para SageMaker.
-
-#### 2. Deploy no AWS SageMaker com Streamlit ou FastAPI
+#### 1. Deploy no AWS SageMaker com Streamlit ou FastAPI
 - Testar o projeto na nuvem, sob demanda, com escalabilidade.
 - Com o container pronto, o deploy no SageMaker é direto.
 - medir desempenho real (OCR, embeddings, consulta), adiciona observabilidade operacional e de custo, essencial para produção real.
 - configurar Auto Scaling, monitoramento, etc.
 - MVP rodando em ambiente de produção cloud.
 
-#### 3. Aplicar arquitetura MCP-like (Memory, Controller, Planner)
+#### 2. Aplicar arquitetura MCP-like (Memory, Controller, Planner)
 - Modularizar a inteligência do agente e preparar para evoluir para LangGraph.
 - Transforma o pipeline RAG em um agente inteligente.
 - Separa o controle de fluxo (Controller), decisões (Planner) e memória (Memory).
 - Passa a entender o que fazer (ex: “gerar resposta”, “buscar cláusulas”, “resumir”), não só responder.
 
-#### 3.5. Integração com APIs e Microsserviços
+#### 2.5. Integração com APIs e Microsserviços
 - REST para microsserviços individuais
 - Implementar REST APIs para cada módulo do MCP (Planner, Controller, Memory), garantindo isolamento, versionamento e testes independentes.
 - Criar serviços REST para módulos essenciais: OCR, RAG, Reranker, Feedback, Sessões de usuário, etc.
@@ -238,31 +233,31 @@ Etapas pendentes:
 - Adicionar GraphQL como camada de orquestração, permitindo consultas agregadas entre múltiplos microsserviços.
 - Facilitar otimização de consultas, evitando múltiplas chamadas REST quando o frontend precisar compor respostas (exemplo: plano + histórico + resposta em uma única query).
 
-#### 4. Evoluir para LangGraph
+#### 3. Evoluir para LangGraph
 - Com o MCP modularizado, posso criar fluxos complexos e autônomos.
 - LangGraph permite múltiplos nós, ciclos, dependências entre etapas (ex: “buscar → validar → executar ferramenta → gerar explicação final”).
 - Ideal para construir agentes reais, com persistência e automação de tarefas.
 - Agente jurídico inteligente, com múltiplos comportamentos e decisões encadeadas.
 
-#### 5. Enriquecimento de contexto com reranking
+#### 4. Enriquecimento de contexto com reranking
 - Re-ranking via Cohere ou bge-reranker
 - Filtros semânticos por seção legal (cláusula, título, artigo)
 
-#### 6. Autoavaliação e feedback loop
+#### 5. Autoavaliação e feedback loop
 - Modelo avalia qualidade das respostas
 - Ajuste dinâmico com RHF-like
 
-#### 7. SaaS Multiusuário
+#### 6. SaaS Multiusuário
 - Sessões independentes por usuário
 - Histórico, preferências e permissões
 - Dashboards de uso e relatórios
 
-#### 8. Multimodalidade
+#### 7. Multimodalidade
 - Leitura de contratos escaneados (OCR)  (já entregue)
 - Upload de áudio jurídico para transcrição
 - Integrações com automações (e-mails, geração de minutas, etc.)
 
-#### 9. Orquestração com Kubernetes
+#### 8. Orquestração com Kubernetes
 - Containerizar todos os microsserviços e configurar seus deployments
 - Usar Kubernetes para escalabilidade, balanceamento de carga, observabilidade e tolerância a falhas
 - Ideal para ambientes de produção com múltiplos usuários simultâneos e workloads variáveis
