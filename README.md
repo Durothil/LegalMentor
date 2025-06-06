@@ -29,14 +29,19 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 
 ## 🧠 Tecnologias Utilizadas
 
-- **Python 3.10+**
-- **Streamlit** (Interface)
-- **LangChain** (Orquestração RAG)
-- **Claude Sonnet 4** (via API da Anthropic)
-- **Pinecone** (Vectorstore vetorial com embeddings integrados)
-- **Docling** (Processamento semântico de PDFs)
-- **HuggingFace Embeddings** (`multilingual-e5-large`)
-- **Pytest** (testes automatizados)
+- **Python 3.12+** (requerido)
+- **Streamlit** – Interface Web
+- **LangChain** – Cadeia RAG com rastreamento e ferramentas
+- **Claude Sonnet 4 (Anthropic)** – LLM principal via API
+- **Pinecone** – Vetorstore para embeddings jurídicos
+- **Docling** – Processamento semântico de PDFs acessíveis
+- **Tesseract OCR** + **LayoutLMv2Processor** – OCR com bounding boxes e estruturação visual
+- **HuggingFace Embeddings** (`multilingual-e5-large`) – Embeddings semânticos
+- **Sentence-BERT (MiniLM)** – Agrupamento semântico de cláusulas
+- **Regex jurídico** – Extração e separação de seções legais
+- **LangSmith** – Observabilidade e rastreamento da cadeia RAG
+- **Docker + Docker Compose** – Empacotamento e execução reprodutível
+- **Pytest** – Testes automatizados e verificação de versão mínima do Python
 
 ---
 
