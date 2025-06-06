@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  legalmentor:
+    build: .
+    container_name: legalmentor-container
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data  # Mantém os documentos salvos localmente
+      # Monta a pasta `.streamlit` local no mesmo caminho dentro do container
+      - ./assets:/app/assets
+      - ./.streamlit:/app/.streamlit  # <- aqui ele monta o `secrets.toml`
+    environment:
+      - PYTHONUNBUFFERED=1

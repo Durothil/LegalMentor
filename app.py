@@ -1,3 +1,8 @@
+import sys
+# 🚨 Verificação de versão do Python
+if sys.version_info < (3, 12):
+    raise RuntimeError("❌ Este projeto requer Python >= 3.12 para funcionar corretamente com LangChain e OCR.")
+
 from pathlib import Path
 import streamlit as st
 

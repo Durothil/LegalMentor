@@ -1,0 +1,9 @@
+@echo off
+echo 🛑 Parando container existente...
+docker-compose down
+
+echo 🛠️ Recriando a imagem com as últimas alterações...
+docker-compose build
+
+echo 🚀 Subindo o container atualizado...
+docker-compose up

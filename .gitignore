@@ -18,3 +18,8 @@ data/
 
 # Outros
 *.log
+
+# Docker
+*.tar
+*.img
+docker-compose.override.yml

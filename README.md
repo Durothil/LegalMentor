@@ -54,21 +54,24 @@ legalmentor/
 ├── README.md             # Documentação principal
 ├── setup_langsmith.py    # 
 ├── LICENSE               # 
+├── .gitignore            # 
+├── pytest.ini            # 
+├── build_and_up.bat      # 
+├── .dockerignore         # 
+├── Dockerfile            # 
+├── docker-compose.yml    # 
 │
 ├── assets/
 │   └── layout_sistema.png
 │
 ├── .streamlit/
-│   ├── secrets.toml      # Configurações de API (Claude, Pinecone)
+│   ├── secrets.example.toml 
 │   └── config.toml       # Configs de tema/execução
 │
-├── data/
-│   ├── documentos/       # PDFs e arquivos enviados
-│   └── indexes/          # Índices locais (caso FAISS seja usado em testes)
-│
 ├── tests/
-│   ├── test_pipeline.py  # Testes de fluxo principal
-│   └── test_utils.py     # Testes de funções auxiliares
+│   ├── test_pipeline.py        # Testes de fluxo principal
+│   ├── test_python_version.py  # Testes de versão
+│   └── test_utils.py           # Testes de funções auxiliares
 ```
 
 ---
