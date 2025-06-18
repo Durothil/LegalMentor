@@ -7,7 +7,7 @@ from langchain_core.documents import Document as LCDocument
 from transformers import AutoTokenizer
 from typing import Union
 from pathlib import Path
-from config import EMBEDDING_TOKEN_LIMIT
+from .config import EMBEDDING_TOKEN_LIMIT
 
 @traceable(name="🧼 Sanitizar Metadados")
 def sanitize_metadata(metadata: dict) -> dict:

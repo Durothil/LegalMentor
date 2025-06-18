@@ -1,6 +1,29 @@
-import setup_langsmith # pylint: disable=unused-import # necessário para configurar variáveis de ambiente
-from typing import List, Dict, Any
+# core/rag_pipeline.py
+from __future__ import annotations          # opcional, ajuda com type-hints cíclicos
 
+# ───────────── Imports do próprio core (agora relativos) ─────────────
+from . import setup_langsmith               # configura LangSmith
+from .layout_ocr import layout_ocr_from_pdf
+from .utils import (
+    sanitize_metadata,
+    log_time,
+    prefix_documents_for_e5,
+    count_tokens,
+    format_response,
+    adjust_chunks_to_token_limit,
+)
+from .config import (
+    EMBEDDING_MODEL_NAME,
+    LLM_MODEL_NAME,
+    TOKEN_LIMIT,
+    PINECONE_INDEX_NAME,
+    EMBEDDING_TOKEN_LIMIT,
+    PINECONE_BATCH_SIZE,
+)
+from .setup_langsmith import tracing_enabled
+
+# ───────────── Imports externos ─────────────
+from typing import List, Dict, Any
 import streamlit as st
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.vectorstores import VectorStore
@@ -11,33 +34,9 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents.stuff import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
-
 from langchain_docling import DoclingLoader
 from langchain_docling.loader import ExportType
-
-from layout_ocr import layout_ocr_from_pdf
-
 from langsmith import traceable
-from setup_langsmith import tracing_enabled
-
-from utils import (
-    sanitize_metadata,
-    log_time,
-    prefix_documents_for_e5,
-    count_tokens,
-    format_response,
-    #split_text_by_token_limit,
-    adjust_chunks_to_token_limit
-)
-
-from config import (
-    EMBEDDING_MODEL_NAME,
-    LLM_MODEL_NAME,
-    TOKEN_LIMIT,
-    PINECONE_INDEX_NAME,
-    EMBEDDING_TOKEN_LIMIT,
-    PINECONE_BATCH_SIZE
-)
     
 @traceable(name="📄 Load Documents (Docling)")
 @log_time

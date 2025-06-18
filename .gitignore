@@ -1,29 +1,33 @@
-# Ambiente virtual
+# ────────── Ambientes virtuais ──────────
 .venv/
+.streamlit/secrets.toml        # ← segredos na raiz
 
-# Arquivos do Streamlit
-.streamlit/secrets.toml
+# ────────── Build/egg artifacts ──────────
+*.egg-info/
+build/
+dist/
 
-# Arquivos gerados pelo Python
+# ────────── Cache Python ──────────
 __pycache__/
 *.py[cod]
 *.so
 
-# Configurações de sistema
+# ────────── Streamlit ──────────
+.streamlit/secrets.toml        # arquivo de segredos na raiz
+frontend/.streamlit/           # opcional: ignora configs/segredos no front
+
+# ────────── Dados & uploads ──────────
+data/
+uploaded_docs/
+
+# ────────── Logs ──────────
+*.log
+
+# ────────── Sistema ──────────
 .DS_Store
 Thumbs.db
 
-# Dados do projeto
-data/
-
-# Outros
-*.log
-
-# Docker
+# ────────── Docker ──────────
 *.tar
 *.img
 docker-compose.override.yml
-
-uploaded_docs/
-
-echo "uploaded_docs/"

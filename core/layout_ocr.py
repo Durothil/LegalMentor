@@ -9,8 +9,8 @@ from langsmith import traceable
 from langchain_core.documents import Document as LCDocument
 from sentence_transformers import SentenceTransformer, util
 from typing import List
-from config import EMBEDDING_TOKEN_LIMIT
-from utils import (split_text_by_token_limit, 
+from core.config import EMBEDDING_TOKEN_LIMIT
+from .utils import (split_text_by_token_limit, 
                    adjust_chunks_to_token_limit)
 
 # ======== MODELOS =========

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 # Permite importar módulos que já estão na raiz
 sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
 
-from rag_pipeline import process_document            # usa seu código existente
+from core.rag_pipeline import process_document            # usa seu código existente
 
 app = FastAPI(title="LegalMentor API")
 app.state.chains = {}                                # memória simples
