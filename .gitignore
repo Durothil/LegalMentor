@@ -16,6 +16,9 @@ Thumbs.db
 # Dados do projeto
 data/
 
+uploaded_docs/
+
+
 # Outros
 *.log
 
