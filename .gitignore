@@ -25,3 +25,5 @@ data/
 docker-compose.override.yml
 
 uploaded_docs/
+
+echo "uploaded_docs/"
