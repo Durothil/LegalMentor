@@ -1,105 +1,86 @@
+# frontend/app.py  –  Streamlit chamando a API FastAPI
 import sys
-# 🚨 Verificação de versão do Python
-if sys.version_info < (3, 12):
-    raise RuntimeError("❌ Este projeto requer Python >= 3.12 para funcionar corretamente com LangChain e OCR.")
-
-from pathlib import Path
+import requests
 import streamlit as st
 
-from rag_pipeline import process_document
+# ─────────────────── Config API ───────────────────
+API_URL = "http://localhost:8000"     # ajuste se o backend estiver em outro host
 
-# Configurações de pasta
-DATA_FOLDER = Path("data")
-DOCUMENTS_FOLDER = DATA_FOLDER / "documentos"
-INDEXES_FOLDER = DATA_FOLDER / "indexes"
+# ───────────────── Verificação de versão ──────────
+if sys.version_info < (3, 12):
+    raise RuntimeError("❌ Este projeto requer Python >= 3.12")
 
-# Garante que as pastas existem
-DOCUMENTS_FOLDER.mkdir(parents=True, exist_ok=True)
-INDEXES_FOLDER.mkdir(parents=True, exist_ok=True)
-
-# Configuração da página
+# ───────────────── Config. de página ──────────────
 st.set_page_config(page_title="RAG Jurídico", layout="wide")
 st.title("📚 RAG Jurídico")
 st.subheader("Análise Inteligente de Documentos Jurídicos")
 
-# Inicializa session_state
-if "rag_chain" not in st.session_state:
-    st.session_state.rag_chain = None
-
-if "document_path" not in st.session_state:
-    st.session_state.document_path = None
-
+# ────────────── Inicialização de estado ───────────
+if "doc_id" not in st.session_state:
+    st.session_state.doc_id = None
 if "history" not in st.session_state:
-    st.session_state.history = []  # Lista de dicts {"question": ..., "answer": ...}
+    st.session_state.history = []
 
-# Upload de documento
+# ───────────────── Upload de PDF ──────────────────
 uploaded_file = st.file_uploader("📎 Envie um PDF jurídico", type=["pdf"])
+
 if uploaded_file:
     try:
-        # Salva o arquivo
-        file_path = DOCUMENTS_FOLDER / uploaded_file.name
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success(f"✅ Documento '{uploaded_file.name}' salvo em `{file_path}`")
-        st.session_state.document_path = file_path
+        with st.spinner("Enviando e processando no back-end..."):
+            resp = requests.post(
+                f"{API_URL}/rag/upload",
+                files={"file": (uploaded_file.name, uploaded_file, "application/pdf")}
+            )
+        resp.raise_for_status()
+        st.session_state.doc_id = resp.json()["doc_id"]
+        st.success("✅ Documento processado! Agora faça perguntas.")
     except Exception as e:
-        st.error(f"❌ Falha ao salvar o documento: {e}")
+        st.error(f"❌ Falha no upload/processamento: {e}")
 
-# Se quiser iniciar direto com os dados já indexados no Pinecone
-st.markdown("### Ou use os documentos existentes no Pinecone")
+# ───────────── Botão para índice já existente ────────────
+st.markdown("### Já tenho documentos indexados")
 if st.button("📦 Iniciar com documentos existentes"):
-    try:
-        with st.spinner("Conectando com os documentos existentes no Pinecone..."):
-            chain = process_document(None)  # passamos None para não carregar novos arquivos
-        if chain is None:
-            st.error("❌ Não foi possível criar a pipeline RAG.")
-        else:
-            st.success("✅ RAG iniciado com documentos do Pinecone!")
-            st.session_state.rag_chain = chain
-            st.session_state.history.clear()
-    except Exception as e:
-        st.error(f"❌ Erro ao iniciar com documentos do Pinecone: {e}")
-
-# Upload e processamento de novo documento
-st.markdown("### Ou envie um novo documento PDF para análise")
-if st.session_state.document_path:
-    if st.button("🔍 Processar documento"):
+    with st.spinner("Conectando ao índice existente..."):
         try:
-            with st.spinner("Processando documento, aguarde... ⏳"):
-                chain = process_document(str(st.session_state.document_path))
-            if chain is None:
-                st.error("❌ Não foi possível criar a pipeline RAG.")
-            else:
-                st.success("✅ Documento processado com sucesso!")
-                st.session_state.rag_chain = chain
-                st.session_state.history.clear()
+            resp = requests.post(f"{API_URL}/rag/init")
+            resp.raise_for_status()
+            st.session_state.doc_id = resp.json()["doc_id"]   # 'default'
+            st.success("✅ Conectado! Agora faça perguntas.")
         except Exception as e:
-            st.error(f"❌ Erro ao processar documento: {e}")
-
+            st.error(f"❌ Erro: {e}")
 
 st.divider()
 
-# Interface de consulta
+# ───────────────── Caixa de Pergunta ──────────────
 st.subheader("🤖 Faça uma pergunta sobre o documento")
 
-if st.session_state.rag_chain:
-    pergunta = st.text_input("Digite sua pergunta aqui", key="input")
+if st.session_state.doc_id:
+    pergunta = st.text_input("Digite sua pergunta aqui")
     if pergunta:
         try:
-            with st.spinner("Consultando o documento... 🤖"):
-                resultado = st.session_state.rag_chain.invoke({"input": pergunta})
-            resposta = resultado.get("answer", "❌ Sem resposta.")
-            # Armazena no histórico
-            st.session_state.history.append({"question": pergunta, "answer": resposta})
-            # Exibe
+            with st.spinner("Consultando o back-end... 🤖"):
+                resp = requests.post(
+                    f"{API_URL}/rag/query",
+                    json={
+                        "doc_id": st.session_state.doc_id,
+                        "pergunta": pergunta
+                    }
+                )
+            resp.raise_for_status()
+            resposta = resp.json().get("answer", "❌ Sem resposta.")
+            # histórico
+            st.session_state.history.append(
+                {"question": pergunta, "answer": resposta}
+            )
+            # exibe
             st.markdown(f"**Você:** {pergunta}")
             st.markdown(f"**IA:** {resposta}")
         except Exception as e:
             st.error(f"❌ Erro na consulta: {e}")
 else:
-    st.info("📎 Primeiro carregue e processe um documento para perguntar.")
+    st.info("📎 Faça upload de um PDF ou conecte ao índice existente.")
 
-# Mostrar histórico
+# ──────────────── Histórico de Chat ───────────────
 if st.session_state.history:
     st.divider()
     st.subheader("🕘 Histórico de Perguntas e Respostas")
