@@ -16,9 +16,6 @@ Thumbs.db
 # Dados do projeto
 data/
 
-uploaded_docs/
-
-
 # Outros
 *.log
 
@@ -26,3 +23,5 @@ uploaded_docs/
 *.tar
 *.img
 docker-compose.override.yml
+
+uploaded_docs/
