@@ -61,8 +61,7 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 legalmentor/
 │
 ├── backend/
-│   ├── api.py              # API FastAPI principal
-│   └── .env                # Variáveis de ambiente do backend (criar do .env.example)
+│   └── api.py              # API FastAPI principal
 │
 ├── core/                   # Núcleo compartilhado do sistema
 │   ├── __init__.py
@@ -87,6 +86,7 @@ legalmentor/
 │
 ├── uploaded_docs/          # Pasta para PDFs enviados (criada automaticamente)
 ├── data/                   # Dados e índices (criada automaticamente)
+├── .env                    # Variáveis de ambiente 
 │
 ├── requirements.txt        # Dependências Python
 ├── setup.py               # Configuração do pacote
