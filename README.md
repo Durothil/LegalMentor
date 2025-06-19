@@ -278,60 +278,60 @@ Etapas pendentes:
 - ✅ Substituir Groq por Claude Sonnet 4  
 - ✅ OCR com LayoutLMv2 + regex jurídica + agrupamento semântico  
 - ✅ Dockerizar 
-- 🚧 Simulação de MCP-like com LangChain (Planner, Controller, Memory)  
+- ✅ Simulação de MCP-like com LangChain (Planner, Controller, Memory)  
 
 ### 🔜 Etapas Futuras:
 
-#### 1. Deploy no AWS SageMaker com Streamlit ou FastAPI
-- Testar o projeto na nuvem, sob demanda, com escalabilidade.
-- Com o container pronto, o deploy no SageMaker é direto.
-- medir desempenho real (OCR, embeddings, consulta), adiciona observabilidade operacional e de custo, essencial para produção real.
-- configurar Auto Scaling, monitoramento, etc.
-- MVP rodando em ambiente de produção cloud.
+#### 0. Fundamentos de Engenharia
+0.1 Automação de testes → TDD (pytest, cobertura ≥ 80 %)
+0.2 SOLID & Design Patterns (interfaces para LLM, VectorStore; fábricas, inversão de dependência)
+0.3 CI ( GitHub Actions rodando lint + testes a cada PR )
 
-#### 2. Aplicar arquitetura MCP-like (Memory, Controller, Planner)
-- Modularizar a inteligência do agente e preparar para evoluir para LangGraph.
-- Transforma o pipeline RAG em um agente inteligente.
-- Separa o controle de fluxo (Controller), decisões (Planner) e memória (Memory).
-- Passa a entender o que fazer (ex: "gerar resposta", "buscar cláusulas", "resumir"), não só responder.
+#### 1. Deploy Cloud mínimo
+- Container Docker (FastAPI + Streamlit)
+- Publicação em AWS SageMaker ou Vertex AI
+- Logs + métricas básicas; autoscaling do endpoint
 
-#### 2.5. Integração com APIs e Microsserviços
-- REST para microsserviços individuais
-- Implementar REST APIs para cada módulo do MCP (Planner, Controller, Memory), garantindo isolamento, versionamento e testes independentes.
-- Criar serviços REST para módulos essenciais: OCR, RAG, Reranker, Feedback, Sessões de usuário, etc.
+#### 2. Arquitetura MCP (✔ implementada)
+- Memory - Controller - Planner com toggle no frontend
+- Endpoint público /mcp/memory (precisa de auth em produção)
 
-- GraphQL como API gateway
-- Adicionar GraphQL como camada de orquestração, permitindo consultas agregadas entre múltiplos microsserviços.
-- Facilitar otimização de consultas, evitando múltiplas chamadas REST quando o frontend precisar compor respostas (exemplo: plano + histórico + resposta em uma única query).
+#### 3. Enriquecimento de contexto (Re-ranking)
+- Integrar Cohere ReRank ou bge-reranker
+- Filtros semânticos por seção jurídica (cláusula, artigo, título)
 
-#### 3. Evoluir para LangGraph
-- Com o MCP modularizado, posso criar fluxos complexos e autônomos.
-- LangGraph permite múltiplos nós, ciclos, dependências entre etapas (ex: "buscar → validar → executar ferramenta → gerar explicação final").
-- Ideal para construir agentes reais, com persistência e automação de tarefas.
-- Agente jurídico inteligente, com múltiplos comportamentos e decisões encadeadas.
+#### 4. Feedback Loop + Auto-avaliação
+- Endpoint /feedback gravando 👍/👎 e comentários
+- Script offline de avaliação com LLM (estilo RHF)
+- Ajuste automático de prompts/re-rank com base nos dados
 
-#### 4. Enriquecimento de contexto com reranking
-- Re-ranking via Cohere ou bge-reranker
-- Filtros semânticos por seção legal (cláusula, título, artigo)
+#### 5. MLOps / Versionamento
+- MLflow para rastrear execuções de embeddings / LLM
+- DVC (ou Weights & Biases Artifacts) para versionar índices Pinecone e modelos fine-tuned
+- Pipeline CI/CD separada para (i) imagem de inferência e (ii) imagem de treinamento/atualização de índice
 
-#### 5. Autoavaliação e feedback loop
-- Modelo avalia qualidade das respostas
-- Ajuste dinâmico com RHF-like
+#### 6. Evolução para LangGraph
+- Converter pipeline em grafo (nós: Retrieval, Re-rank, LLM, Feedback)
+- Suportar loops de validação e retries
+- Permitir múltiplos fluxos autônomos e persistência de estado
 
-#### 6. SaaS Multiusuário
-- Sessões independentes por usuário
-- Histórico, preferências e permissões
-- Dashboards de uso e relatórios
+#### 7. Microsserviços & API Gateway
+- Quebrar OCR, RAG, Re-ranker, Memory em serviços FastAPI independentes
+- GraphQL na borda para compor respostas e evitar múltiplas chamadas REST
 
-#### 7. Multimodalidade
-- Leitura de contratos escaneados (OCR)  (já entregue)
-- Upload de áudio jurídico para transcrição
-- Integrações com automações (e-mails, geração de minutas, etc.)
+#### 8. SaaS Multi-tenant
+- Sessões, histórico, preferências, permissões por usuário
+- Dashboards de uso / billing
 
-#### 8. Orquestração com Kubernetes
-- Containerizar todos os microsserviços e configurar seus deployments
-- Usar Kubernetes para escalabilidade, balanceamento de carga, observabilidade e tolerância a falhas
-- Ideal para ambientes de produção com múltiplos usuários simultâneos e workloads variáveis
+#### 9. Multimodalidade
+- Áudio (Whisper)
+- Imagem (LayoutLM)
+- Triggers por e-mail / geração de minutas etc.
+
+#### 10. Orquestração Kubernetes
+- Helm chart, Horizontal Pod Autoscaler
+- Observabilidade (Prometheus/Grafana)
+- Deploys zero-downtime e resiliência para alta demanda
 
 ---
 
