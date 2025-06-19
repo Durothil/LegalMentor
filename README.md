@@ -35,6 +35,7 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 - **LangChain** – Cadeia RAG com rastreamento e ferramentas
 - **Claude Sonnet 4 (Anthropic)** – LLM principal via API
 - **Pinecone** – Vetorstore para embeddings jurídicos
+- **MCP (Memory – Controller – Planner)** – arquitetura de agente com memória contextual, planejamento de fluxo e controle de conversação  
 
 ### Frontend
 - **Streamlit** – Interface Web
@@ -69,6 +70,7 @@ legalmentor/
 │   ├── layout_ocr.py      # OCR e processamento de layouts
 │   ├── rag_pipeline.py    # Pipeline RAG principal
 │   ├── setup_langsmith.py # Configuração do LangSmith
+│   ├── mcp.py             # Configuração do MCP
 │   └── utils.py           # Funções auxiliares
 │
 ├── frontend/
@@ -283,9 +285,9 @@ Etapas pendentes:
 ### 🔜 Etapas Futuras:
 
 #### 0. Fundamentos de Engenharia
-0.1 Automação de testes → TDD (pytest, cobertura ≥ 80 %)
-0.2 SOLID & Design Patterns (interfaces para LLM, VectorStore; fábricas, inversão de dependência)
-0.3 CI ( GitHub Actions rodando lint + testes a cada PR )
+- Automação de testes → TDD (pytest, cobertura ≥ 80 %)
+- SOLID & Design Patterns (interfaces para LLM, VectorStore; fábricas, inversão de dependência)
+- CI ( GitHub Actions rodando lint + testes a cada PR )
 
 #### 1. Deploy Cloud mínimo
 - Container Docker (FastAPI + Streamlit)
@@ -336,6 +338,12 @@ Etapas pendentes:
 ---
 
 ## Observações 
+
+#### Sobre Arquitetura de Agente
+- **MCP (Memory – Controller – Planner)**  
+  - **Memory:** mantém o contexto das últimas interações  
+  - **Planner:** decide a estratégia (comparação, extração, sumarização…)  
+  - **Controller:** enriquece a pergunta com contexto antes de enviar ao RAG  
 
 #### Sobre o uso do LayoutLM
 
