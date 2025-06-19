@@ -1,6 +1,8 @@
 # ────────── Ambientes virtuais ──────────
 .venv/
-.streamlit/secrets.toml        # ← segredos na raiz
+.env
+.streamlit/secrets.toml
+frontend/.streamlit/secrets.toml
 
 # ────────── Build/egg artifacts ──────────
 *.egg-info/

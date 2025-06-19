@@ -17,7 +17,7 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 
 ## 📸 Exemplo do Sistema
 
-![Layout do sistema](assets/layout_sistema.png)
+![Layout do sistema](/frontend/assets/layout_sistema.png)
 
 ---
 

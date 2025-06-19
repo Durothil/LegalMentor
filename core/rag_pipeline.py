@@ -19,6 +19,8 @@ from .config import (
     PINECONE_INDEX_NAME,
     EMBEDDING_TOKEN_LIMIT,
     PINECONE_BATCH_SIZE,
+    PINECONE_API_KEY,      # ← novo
+    ANTHROPIC_API_KEY      # ← novo
 )
 from .setup_langsmith import tracing_enabled
 
@@ -67,7 +69,7 @@ def create_or_load_vectorstore(
     """
     try:
         # Inicializa cliente Pinecone
-        pc = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
+        pc = Pinecone(api_key=PINECONE_API_KEY)
 
         index_name = PINECONE_INDEX_NAME
 
@@ -108,7 +110,7 @@ def create_rag_chain(vectorstore: VectorStore) -> Any:
     llm = ChatAnthropic(
         temperature=0.1,
         model_name=LLM_MODEL_NAME,
-        api_key=st.secrets["ANTHROPIC_API_KEY"],
+        api_key=ANTHROPIC_API_KEY,
         max_tokens=1000,  # Resposta gerada
     )
     
