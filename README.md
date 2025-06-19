@@ -1,4 +1,3 @@
-
 # ⚖️ LegalMentor
 
 **LegalMentor** é um sistema inteligente de análise jurídica baseado em **RAG (Retrieval-Augmented Generation)**. Evolução direta do projeto *rag_juridico*, esta nova versão oferece uma base profissional para copilotos jurídicos com uso de IA generativa, integração com **Claude Sonnet 4**, embeddings contextuais, vetorização com **Pinecone** e futura compatibilidade com o protocolo **MCP da Anthropic**.
@@ -29,19 +28,30 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 
 ## 🧠 Tecnologias Utilizadas
 
+### Backend
 - **Python 3.12+** (requerido)
-- **Streamlit** – Interface Web
+- **FastAPI** – API REST para servir o pipeline RAG
+- **Uvicorn** – Servidor ASGI para FastAPI
 - **LangChain** – Cadeia RAG com rastreamento e ferramentas
 - **Claude Sonnet 4 (Anthropic)** – LLM principal via API
 - **Pinecone** – Vetorstore para embeddings jurídicos
+
+### Frontend
+- **Streamlit** – Interface Web
+- **Requests** – Cliente HTTP para comunicação com a API
+
+### Processamento de Documentos
 - **Docling** – Processamento semântico de PDFs acessíveis
 - **Tesseract OCR** + **LayoutLMv2Processor** – OCR com bounding boxes e estruturação visual
 - **HuggingFace Embeddings** (`multilingual-e5-large`) – Embeddings semânticos
 - **Sentence-BERT (MiniLM)** – Agrupamento semântico de cláusulas
 - **Regex jurídico** – Extração e separação de seções legais
+
+### DevOps & Observabilidade
 - **LangSmith** – Observabilidade e rastreamento da cadeia RAG
 - **Docker + Docker Compose** – Empacotamento e execução reprodutível
 - **Pytest** – Testes automatizados e verificação de versão mínima do Python
+- **python-dotenv** – Gerenciamento de variáveis de ambiente
 
 ---
 
@@ -50,58 +60,119 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 ```
 legalmentor/
 │
-├── app.py                # Interface principal com Streamlit
-├── config.py             # Configurações globais do projeto
-├── layout_ocr.py         # Layout da interface para OCR e upload de PDFs
-├── rag_pipeline.py       # Pipeline RAG com vetorização e cadeia de resposta
-├── setup_langsmith.py    # Integração com LangSmith para telemetria
-├── utils.py              # Funções auxiliares: logs, limpeza, metadados
-├── requirements.txt      # Dependências do projeto
-├── README.md             # Documentação principal
-├── LICENSE               # Licença do projeto (MIT)
-├── pytest.ini            # Configurações para testes com Pytest
+├── backend/
+│   ├── api.py              # API FastAPI principal
+│   └── .env                # Variáveis de ambiente do backend (criar do .env.example)
 │
-├── build_and_up.bat      # Script para rebuild e execução via Docker
-├── Dockerfile            # Instruções para build da imagem Docker
-├── docker-compose.yml    # Orquestração do container Docker
-├── .dockerignore         # Arquivos ignorados no contexto do Docker build
-├── .gitignore            # Arquivos/pastas ignorados pelo Git
+├── core/                   # Núcleo compartilhado do sistema
+│   ├── __init__.py
+│   ├── config.py          # Configurações centralizadas
+│   ├── layout_ocr.py      # OCR e processamento de layouts
+│   ├── rag_pipeline.py    # Pipeline RAG principal
+│   ├── setup_langsmith.py # Configuração do LangSmith
+│   └── utils.py           # Funções auxiliares
 │
-├── assets/
-│   └── layout_sistema.png  # Imagem de exemplo da interface
+├── frontend/
+│   ├── app.py             # Interface Streamlit
+│   ├── assets/
+│   │   └── layout_sistema.png
+│   └── .streamlit/
+│       ├── config.toml         # Configurações visuais do Streamlit
+│       └── secrets.toml        # Segredos do frontend (criar do secrets.example.toml)
 │
-├── .streamlit/
-│   ├── config.toml          # Configurações visuais e gerais do Streamlit
-│   └── secrets.example.toml # Exemplo seguro de variáveis sensíveis
+├── tests/                  # Testes automatizados
+│   ├── test_pipeline.py
+│   ├── test_python_version.py
+│   └── test_utils.py
 │
-├── tests/
-│   ├── test_pipeline.py        # Testes da cadeia RAG
-│   ├── test_python_version.py  # Teste da versão mínima do Python
-│   └── test_utils.py           # Testes para funções auxiliares
+├── uploaded_docs/          # Pasta para PDFs enviados (criada automaticamente)
+├── data/                   # Dados e índices (criada automaticamente)
+│
+├── requirements.txt        # Dependências Python
+├── setup.py               # Configuração do pacote
+├── pytest.ini             # Configuração dos testes
+├── README.md              # Este arquivo
+├── LICENSE                # Licença MIT
+├── .gitignore            # Arquivos ignorados pelo Git
+│
+├── Dockerfile             # Container Docker
+├── docker-compose.yml     # Orquestração Docker
+├── .dockerignore         # Arquivos ignorados no Docker
+└── build_and_up.bat      # Script para rebuild Docker
 ```
 
 ---
 
 ## ▶️ Como Executar Localmente
 
-1. Crie e ative o ambiente virtual:
+### Pré-requisitos
+- Python 3.12 ou superior
+- Chaves de API (Anthropic, Pinecone, etc)
+
+### 1. Clone o repositório e prepare o ambiente
+
 ```bash
+git clone https://github.com/seu-usuario/legalmentor.git
+cd legalmentor
+
+# Criar ambiente virtual
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
-```
 
-2. Instale as dependências:
-```bash
+# Instalar dependências
 pip install -r requirements.txt
+
+# Instalar o pacote em modo desenvolvimento
+pip install -e .
 ```
 
-3. Execute o sistema:
+### 2. Configure as variáveis de ambiente
+
+O projeto usa dois arquivos de configuração:
+
+#### Backend (.env na raiz):
 ```bash
+# Criar arquivo .env na raiz do projeto
+cp .env.example .env
+
+# Editar com suas credenciais:
+PINECONE_API_KEY=your-pinecone-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
+LANGSMITH_API_KEY=your-langsmith-key
+# ... outras variáveis
+```
+
+#### Frontend (secrets.toml):
+```bash
+# Criar arquivo secrets.toml no frontend
+cp frontend/.streamlit/secrets.example.toml frontend/.streamlit/secrets.toml
+
+# Editar com suas credenciais:
+# As mesmas chaves do .env, mas em formato TOML
+```
+
+### 3. Execute o sistema
+
+Você precisa rodar **dois serviços** em terminais separados:
+
+#### Terminal 1 - Backend (API):
+```bash
+cd backend
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
+```
+
+O backend estará disponível em: http://localhost:8000
+- Documentação da API: http://localhost:8000/docs
+
+#### Terminal 2 - Frontend (Streamlit):
+```bash
+cd frontend
 streamlit run app.py
 ```
 
----
+O frontend estará disponível em: http://localhost:8501
 
+---
 
 ## 🐳 Executar com Docker (recomendado)
 
@@ -222,7 +293,7 @@ Etapas pendentes:
 - Modularizar a inteligência do agente e preparar para evoluir para LangGraph.
 - Transforma o pipeline RAG em um agente inteligente.
 - Separa o controle de fluxo (Controller), decisões (Planner) e memória (Memory).
-- Passa a entender o que fazer (ex: “gerar resposta”, “buscar cláusulas”, “resumir”), não só responder.
+- Passa a entender o que fazer (ex: "gerar resposta", "buscar cláusulas", "resumir"), não só responder.
 
 #### 2.5. Integração com APIs e Microsserviços
 - REST para microsserviços individuais
@@ -235,7 +306,7 @@ Etapas pendentes:
 
 #### 3. Evoluir para LangGraph
 - Com o MCP modularizado, posso criar fluxos complexos e autônomos.
-- LangGraph permite múltiplos nós, ciclos, dependências entre etapas (ex: “buscar → validar → executar ferramenta → gerar explicação final”).
+- LangGraph permite múltiplos nós, ciclos, dependências entre etapas (ex: "buscar → validar → executar ferramenta → gerar explicação final").
 - Ideal para construir agentes reais, com persistência e automação de tarefas.
 - Agente jurídico inteligente, com múltiplos comportamentos e decisões encadeadas.
 
