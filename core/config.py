@@ -46,7 +46,7 @@ if not ANTHROPIC_API_KEY:
     print("⚠️ ANTHROPIC_API_KEY não encontrada. Configure no .env ou variáveis de ambiente.")
 
 # ========== EMBEDDINGS ==========
-EMBEDDING_MODEL_NAME  = "intfloat/multilingual-e5-large"
+EMBEDDING_MODEL_NAME  = "intfloat/multilingual-e5-large" #"sentence-transformers/all-MiniLM-L6-v2" #"intfloat/multilingual-e5-large"
 EMBEDDING_TOKEN_LIMIT = 512
 
 # ========== LLM ==========
@@ -61,3 +61,8 @@ PINECONE_BATCH_SIZE = 64
 DATA_FOLDER      = Path("data")
 DOCUMENTS_FOLDER = DATA_FOLDER / "documentos"
 INDEX_FOLDER     = DATA_FOLDER / "indexes"
+
+# ========== LANGGRAPH ==========
+USE_LANGGRAPH = _get_secret("USE_LANGGRAPH", "true").lower() == "true"
+LANGGRAPH_DEBUG = _get_secret("LANGGRAPH_DEBUG", "false").lower() == "true"
+USE_RERANKING = _get_secret("USE_RERANKING", "false").lower() == "true"

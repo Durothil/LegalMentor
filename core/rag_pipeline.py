@@ -19,6 +19,8 @@ from .config import (
     EMBEDDING_TOKEN_LIMIT,
     PINECONE_BATCH_SIZE,
     PINECONE_API_KEY,
+    USE_LANGGRAPH,
+    USE_RERANKING,
     ANTHROPIC_API_KEY,
 )
 from .setup_langsmith import tracing_enabled
@@ -47,6 +49,8 @@ from langchain.chains.retrieval import create_retrieval_chain
 from langchain_docling import DoclingLoader
 from langchain_docling.loader import ExportType
 from langsmith import traceable
+from .graph_wrapper import GraphChainWrapper
+
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +141,13 @@ Resposta:
 
         __call__ = invoke
 
-    return RagChainWrapper(retrieval_chain)
+    base_chain = RagChainWrapper(retrieval_chain)
+    setattr(base_chain, "retriever", retriever)
+    return GraphChainWrapper(
+        base_chain,
+        use_langgraph=USE_LANGGRAPH,
+        use_rerank=USE_RERANKING
+    )
 
 # ----------------------------------------------------------------
 def _invoke_core(chain, inputs, template):

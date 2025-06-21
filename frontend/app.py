@@ -15,15 +15,17 @@ st.title("📚 RAG Jurídico")
 st.subheader("Análise Inteligente de Documentos Jurídicos")
 
 # ───────────── State inicial ─────────────────
-if "doc_id"  not in st.session_state: st.session_state.doc_id = None
-if "history" not in st.session_state: st.session_state.history = []
-if "use_mcp" not in st.session_state: st.session_state.use_mcp = False
-# chave nova para o input
-if "pergunta" not in st.session_state: st.session_state.pergunta = ""
+if "doc_id"          not in st.session_state: st.session_state.doc_id = None
+if "history"         not in st.session_state: st.session_state.history = []
+if "use_mcp"         not in st.session_state: st.session_state.use_mcp = False
+# chave nova para LangGraph
+if "use_langgraph"   not in st.session_state: st.session_state.use_langgraph = True
+if "pergunta"        not in st.session_state: st.session_state.pergunta = ""
 
-# ───────────── Sidebar (MCP switch) ──────────
+# ───────────── Sidebar (MCP switch + LangGraph) ──────────
 with st.sidebar:
     st.header("⚙️ Configurações")
+
     st.session_state.use_mcp = st.checkbox(
         "🧠 Usar MCP",
         value=st.session_state.use_mcp,
@@ -37,6 +39,14 @@ with st.sidebar:
                 st.json(mem["recent_interactions"])
             except Exception as e:
                 st.error(f"Falha ao consultar memória: {e}")
+
+    st.divider()
+    st.subheader("🔗 LangGraph")
+    st.session_state.use_langgraph = st.checkbox(
+        "Ativar LangGraph",
+        value=st.session_state.use_langgraph,
+        help="Encapsula o pipeline no grafo LangGraph"
+    )
 
 # ───────────── Upload de PDF ─────────────────
 uploaded_file = st.file_uploader("📎 Envie um PDF jurídico", type=["pdf"])
@@ -56,11 +66,9 @@ if uploaded_file:
 # ────────── Botão / badge para índice existente ──────
 st.markdown("### Já tenho documentos indexados")
 
-# inicializa o flag (na primeira vez será False)
 if "connected_default" not in st.session_state:
     st.session_state.connected_default = False
 
-# se já estivermos conectados, mostre apenas um badge verde
 if st.session_state.connected_default:
     st.markdown(
         '<p style="background-color:#4CAF50; color:white; '
@@ -69,14 +77,12 @@ if st.session_state.connected_default:
         unsafe_allow_html=True,
     )
 else:
-    # enquanto não estiver conectado, exibe o botão
     if st.button("📦 Conectar ao índice existente"):
         try:
             with st.spinner("Conectando…"):
                 resp = requests.post(f"{API_URL}/rag/init")
                 resp.raise_for_status()
-                doc_id = resp.json()["doc_id"]  # deve vir "default"
-            # marca como conectado
+                doc_id = resp.json()["doc_id"]
             st.session_state.doc_id = doc_id
             st.session_state.connected_default = True
             st.success("✅ Conectado ao índice existente! Agora faça perguntas.")
@@ -92,11 +98,10 @@ if st.session_state.doc_id:
     modo = "🧠 MCP" if st.session_state.use_mcp else "⚡ RAG"
     st.caption(f"Modo atual: **{modo}**")
 
-    # usamos um form para input e botão
     with st.form(key="pergunta_form", clear_on_submit=True):
         pergunta = st.text_input(
             "Digite sua pergunta aqui",
-            key="pergunta",  # chave associada, mas será limpa no submit
+            key="pergunta",
         )
         enviar = st.form_submit_button("Enviar")
 
@@ -106,9 +111,10 @@ if st.session_state.doc_id:
                 resp = requests.post(
                     f"{API_URL}/rag/query",
                     json={
-                        "doc_id":   st.session_state.doc_id,
-                        "pergunta": pergunta,
-                        "use_mcp":  st.session_state.use_mcp
+                        "doc_id":         st.session_state.doc_id,
+                        "pergunta":       pergunta,
+                        "use_mcp":        st.session_state.use_mcp,
+                        "use_langgraph":  st.session_state.use_langgraph,
                     }
                 )
             resp.raise_for_status()
@@ -116,14 +122,12 @@ if st.session_state.doc_id:
             resposta = data.get("answer", "❌ Sem resposta.")
             mcp_on   = data.get("mcp_used", False)
 
-            # Adiciona ao histórico
             st.session_state.history.append({
                 "question": pergunta,
                 "answer":   resposta,
                 "mcp":      mcp_on
             })
 
-            # Exibe resposta
             st.markdown(f"**Você:** {pergunta}")
             st.markdown(f"**IA:** {resposta}")
             if mcp_on and data.get("plan"):
@@ -132,17 +136,14 @@ if st.session_state.doc_id:
 
         except requests.HTTPError as http_err:
             st.error(f"❌ Erro na consulta: {http_err}")
-            # Se for um 500 (Pinecone fora), “desconecta”
             if http_err.response.status_code >= 500:
                 st.session_state.connected_default = False
                 st.info("⚠️ Perdi a conexão com o índice. Tente reconectar.")
-
         except Exception as e:
             st.error(f"❌ Erro na consulta: {e}")
 
 else:
     st.info("📎 Faça upload de um PDF ou conecte ao índice existente.")
-
 
 # ─────────────── Histórico de chat ───────────
 if st.session_state.history:

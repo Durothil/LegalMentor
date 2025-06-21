@@ -294,10 +294,6 @@ Etapas pendentes:
 - Publicação em AWS SageMaker ou Vertex AI
 - Logs + métricas básicas; autoscaling do endpoint
 
-#### 2. Arquitetura MCP (✔ implementada)
-- Memory - Controller - Planner com toggle no frontend
-- Endpoint público /mcp/memory (precisa de auth em produção)
-
 #### 3. Enriquecimento de contexto (Re-ranking)
 - Integrar Cohere ReRank ou bge-reranker
 - Filtros semânticos por seção jurídica (cláusula, artigo, título)
