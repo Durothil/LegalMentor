@@ -1,6 +1,6 @@
 # ⚖️ LegalMentor
 
-**LegalMentor** é um sistema inteligente de análise jurídica baseado em **RAG (Retrieval-Augmented Generation)**. Evolução direta do projeto *rag_juridico*, esta nova versão oferece uma base profissional para copilotos jurídicos com uso de IA generativa, integração com **Claude Sonnet 4**, embeddings contextuais, vetorização com **Pinecone** e futura compatibilidade com o protocolo **MCP da Anthropic**.
+**LegalMentor** é um sistema inteligente de análise jurídica baseado em **RAG (Retrieval-Augmented Generation)** com **LangGraph**. Evolução direta do projeto *rag_juridico*, esta nova versão oferece uma base profissional para copilotos jurídicos com uso de IA generativa, integração com **Claude Sonnet 4**, embeddings contextuais, vetorização com **Pinecone**, arquitetura de grafos com **LangGraph** e compatibilidade com o protocolo **MCP da Anthropic**.
 
 ---
 
@@ -10,7 +10,8 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 
 - Eficiência na consulta de contratos, pareceres, decisões e leis.
 - Assistência jurídica automatizada via LLM.
-- Arquitetura modular e escalável para futuros upgrades (LangGraph, multimodalidade, SaaS, etc).
+- Arquitetura modular e escalável para futuros upgrades (Re-ranking, multimodalidade, SaaS, etc).
+- Pipeline orientado a grafos com LangGraph para maior controle e flexibilidade.
 
 ---
 
@@ -33,6 +34,7 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 - **FastAPI** – API REST para servir o pipeline RAG
 - **Uvicorn** – Servidor ASGI para FastAPI
 - **LangChain** – Cadeia RAG com rastreamento e ferramentas
+- **LangGraph** – Orquestração do pipeline RAG como grafo de estados
 - **Claude Sonnet 4 (Anthropic)** – LLM principal via API
 - **Pinecone** – Vetorstore para embeddings jurídicos
 - **MCP (Memory – Controller – Planner)** – arquitetura de agente com memória contextual, planejamento de fluxo e controle de conversação  
@@ -62,6 +64,7 @@ Desenvolver uma solução robusta para leitura, análise e resposta contextual d
 legalmentor/
 │
 ├── backend/
+│   ├── __init__.py
 │   └── api.py              # API FastAPI principal
 │
 ├── core/                   # Núcleo compartilhado do sistema
@@ -70,8 +73,10 @@ legalmentor/
 │   ├── layout_ocr.py      # OCR e processamento de layouts
 │   ├── rag_pipeline.py    # Pipeline RAG principal
 │   ├── setup_langsmith.py # Configuração do LangSmith
-│   ├── mcp.py             # Configuração do MCP
-│   └── utils.py           # Funções auxiliares
+│   ├── mcp.py             # Sistema MCP (Memory-Controller-Planner)
+│   ├── utils.py           # Funções auxiliares
+│   ├── langgraph_pipeline.py  # Pipeline LangGraph RAG
+│   └── graph_wrapper.py       # Wrapper para escolha entre chain original e LangGraph
 │
 ├── frontend/
 │   ├── app.py             # Interface Streamlit
@@ -82,8 +87,12 @@ legalmentor/
 │       └── secrets.toml        # Segredos do frontend (criar do secrets.example.toml)
 │
 ├── tests/                  # Testes automatizados
+│   ├── test_config.py
+│   ├── test_layout_ocr.py
+│   ├── test_mcp.py
 │   ├── test_pipeline.py
 │   ├── test_python_version.py
+│   ├── test_rag_pipeline.py
 │   └── test_utils.py
 │
 ├── uploaded_docs/          # Pasta para PDFs enviados (criada automaticamente)
@@ -141,6 +150,8 @@ cp .env.example .env
 PINECONE_API_KEY=your-pinecone-api-key
 ANTHROPIC_API_KEY=your-anthropic-api-key
 LANGSMITH_API_KEY=your-langsmith-key
+USE_LANGGRAPH=true  # Habilita o LangGraph
+USE_RERANKING=false # Preparação para re-ranking futuro
 # ... outras variáveis
 ```
 
@@ -224,6 +235,9 @@ LANGSMITH_TRACING = "true"
 LANGSMITH_ENDPOINT = "https://api.smith.langchain.com"
 LANGSMITH_API_KEY = "your-langsmith-key"
 LANGSMITH_PROJECT = "LegalMentor"
+
+USE_LANGGRAPH = "true"
+USE_RERANKING = "false"
 ...
 ```
 
@@ -245,9 +259,52 @@ pytest tests/
 ```
 
 Os testes cobrem:
+- Configuração e carregamento de variáveis
+- Pipeline LangGraph e fluxo de nós
+- Sistema MCP (Memory-Controller-Planner)
 - Cálculo de tokens e sanitização de metadados
 - Indexação vetorial e consulta contextual
 - Erros controlados e fallback seguro
+
+---
+
+## 🔗 Arquitetura LangGraph
+
+O sistema agora utiliza **LangGraph** para orquestrar o pipeline RAG como um grafo de estados:
+
+### Fluxo do Grafo:
+
+**Atual (implementado):**
+```
+┌─────────────┐      ┌─────────────┐
+│   RETRIEVE  │ ───> │  GENERATE   │
+└─────────────┘      └─────────────┘
+     ↓                      ↓
+  Busca docs         Gera resposta
+```
+
+**Futuro (com Re-ranking):**
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   RETRIEVE  │ ───> │   RERANK     │ ───> │  GENERATE   │
+└─────────────┘      └──────────────┘      └─────────────┘
+     ↓                      ↓                      ↓
+  Busca docs          Re-ordena docs         Gera resposta
+```
+
+### Benefícios:
+- **Modularidade**: Cada etapa é um nó independente
+- **Flexibilidade**: Fácil adicionar novos nós (validação, pós-processamento)
+- **Observabilidade**: Rastreamento detalhado de cada etapa
+- **Controle de Estado**: Estado compartilhado entre nós
+- **Preparação para Re-ranking**: Estrutura pronta para implementação futura
+
+### Configuração:
+```python
+# Ativar/desativar via variáveis de ambiente
+USE_LANGGRAPH=true    # Usa pipeline com LangGraph
+USE_RERANKING=false   # Re-ranking preparado mas não implementado
+```
 
 ---
 
@@ -267,10 +324,16 @@ Os testes cobrem:
   - [x] Cadeia RAG completa rastreada
   - [x] Tokenização, tempo de resposta e custo estimado
   - [x] Instrumentação das etapas (OCR, Embeddings, etc.)
+- [x] **Pipeline com LangGraph**:
+  - [x] Grafo de estados para o fluxo RAG
+  - [x] Nós independentes: Retrieve → Rerank → Generate
+  - [x] Metadados de execução (tempo, steps, etc)
+  - [x] Toggle para ativar/desativar via interface
+- [x] **Sistema MCP** (Memory-Controller-Planner):
+  - [x] Memória contextual de conversas
+  - [x] Planejamento de estratégias por tipo de pergunta
+  - [x] Enriquecimento de perguntas com contexto
 
-Etapas pendentes:
-- [ ] Salvar os chunks evitar reprocessar o mesmo documento 2 ou 3 vezes se ele for enviado repetidamente.
-- [ ] Redução de Chunks Curtos - Documentos OCR podem gerar muitos trechos curtos com baixo valor semântico. Será necessário implementar uma lógica de fusão (ex: unir ao chunk anterior) para garantir embeddings mais ricos e melhorar a recuperação no RAG.
 ---
 
 ## 🧠 Roadmap de Evolução
@@ -281,6 +344,7 @@ Etapas pendentes:
 - ✅ OCR com LayoutLMv2 + regex jurídica + agrupamento semântico  
 - ✅ Dockerizar 
 - ✅ Simulação de MCP-like com LangChain (Planner, Controller, Memory)  
+- ✅ **Implementação LangGraph** para orquestração do pipeline
 
 ### 🔜 Etapas Futuras:
 
@@ -294,39 +358,43 @@ Etapas pendentes:
 - Publicação em AWS SageMaker ou Vertex AI
 - Logs + métricas básicas; autoscaling do endpoint
 
-#### 3. Enriquecimento de contexto (Re-ranking)
+#### 2. **Implementação completa do Re-ranking** 🔄
 - Integrar Cohere ReRank ou bge-reranker
+- Implementar lógica real no nó `rerank` do LangGraph
+- Adicionar scores de relevância e otimização de top-k
 - Filtros semânticos por seção jurídica (cláusula, artigo, título)
 
-#### 4. Feedback Loop + Auto-avaliação
+#### 3. Feedback Loop + Auto-avaliação
 - Endpoint /feedback gravando 👍/👎 e comentários
 - Script offline de avaliação com LLM (estilo RHF)
 - Ajuste automático de prompts/re-rank com base nos dados
 
-#### 5. MLOps / Versionamento
+#### 4. MLOps / Versionamento
 - MLflow para rastrear execuções de embeddings / LLM
 - DVC (ou Weights & Biases Artifacts) para versionar índices Pinecone e modelos fine-tuned
 - Pipeline CI/CD separada para (i) imagem de inferência e (ii) imagem de treinamento/atualização de índice
 
-#### 6. Evolução para LangGraph
-- Converter pipeline em grafo (nós: Retrieval, Re-rank, LLM, Feedback)
-- Suportar loops de validação e retries
-- Permitir múltiplos fluxos autônomos e persistência de estado
+#### 5. **Evolução avançada do LangGraph**
+- Adicionar nós de validação e pós-processamento
+- Implementar loops condicionais e retries automáticos
+- Suportar múltiplos fluxos paralelos
+- Persistência de estado entre execuções
+- Visualização do grafo em tempo real
 
-#### 7. Microsserviços & API Gateway
+#### 6. Microsserviços & API Gateway
 - Quebrar OCR, RAG, Re-ranker, Memory em serviços FastAPI independentes
 - GraphQL na borda para compor respostas e evitar múltiplas chamadas REST
 
-#### 8. SaaS Multi-tenant
+#### 7. SaaS Multi-tenant
 - Sessões, histórico, preferências, permissões por usuário
 - Dashboards de uso / billing
 
-#### 9. Multimodalidade
+#### 8. Multimodalidade
 - Áudio (Whisper)
 - Imagem (LayoutLM)
 - Triggers por e-mail / geração de minutas etc.
 
-#### 10. Orquestração Kubernetes
+#### 9. Orquestração Kubernetes
 - Helm chart, Horizontal Pod Autoscaler
 - Observabilidade (Prometheus/Grafana)
 - Deploys zero-downtime e resiliência para alta demanda
@@ -340,6 +408,12 @@ Etapas pendentes:
   - **Memory:** mantém o contexto das últimas interações  
   - **Planner:** decide a estratégia (comparação, extração, sumarização…)  
   - **Controller:** enriquece a pergunta com contexto antes de enviar ao RAG  
+
+#### Sobre LangGraph
+- **Arquitetura de Grafos**: Pipeline estruturado como grafo de estados
+- **Nós Modulares**: Cada etapa do RAG é um nó independente
+- **Estado Compartilhado**: Informações fluem entre nós via RAGState
+- **Extensibilidade**: Fácil adicionar novos nós sem quebrar o fluxo existente
 
 #### Sobre o uso do LayoutLM
 
